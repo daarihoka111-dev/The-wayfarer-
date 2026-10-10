@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="kn" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ದಾರಿಹೋಕ - The Wayfarer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com">
+        function updateAdminPasscode() {
+            const p1 = document.getElementById('newAdminPasscodeInput').value;
+            const p2 = document.getElementById('confirmAdminPasscodeInput').value;
+
+            if (!p1 || p1.trim() === '') {
+                alert('ದಯವಿಟ್ಟು ಹೊಸ ಪಾಸ್‌ಕೋಡ್ ನಮೂದಿಸಿ (Please enter a new passcode).');
+                return;
+            }
+            if (p1 !== p2) {
+                alert('ಪಾಸ್‌ಕೋಡ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ (Passcodes do not match).');
+                return;
+            }
+
+            localStorage.setItem('wayfarer_admin_passcode', p1.trim());
+            alert('🎉 ಆಡಳಿತ ಪಾಸ್‌ಕೋಡ್ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಗಿದೆ! (Passcode updated successfully)');
+            document.getElementById('newAdminPasscodeInput').value = '';
+            document.getElementById('confirmAdminPasscodeInput').value = '';
+        }
+
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Kannada, Arabic, Urdu -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Kannada:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans Kannada', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+        }
+        .font-arabic {
+            font-family: 'Amiri', serif;
+        }
+        .font-urdu {
+            font-family: 'Noto Nastaliq Urdu', serif;
+        }
+        /* Strict Gold rule: ONLY Bismillah is Gold */
+        .gold-bismillah {
+            color: #f59e0b;
+            text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+        }
+        /* Animated Hero Particles Background */
+        .hero-animated-bg {
+            background: linear-gradient(-45deg, #020617, #0f172a, #064e3b, #020617);
+            background-size: 400% 400%;
+            animation: gradientBg 12s ease infinite;
+        }
+        @keyframes gradientBg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- TOPMOST ELEMENT: GOLDEN BISMILLAH CALLIGRAPHY (NOTHING ABOVE THIS) -->
+    <header class="w-full bg-slate-950 py-3 border-b border-slate-900 text-center select-none shadow-md">
+        <div class="gold-bismillah font-arabic text-2xl md:text-3xl font-bold tracking-widest transition-all duration-300">
+            بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+        </div>
+    </header>
+
+    <!-- MAIN NAVBAR & BRANDING BAR -->
+    <nav class="w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Site Brand Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-inner">
+                    📖
+                </div>
+                <div>
+                    <h1 id="site-title" class="text-lg md:text-xl font-extrabold text-white tracking-tight">
+                        ದಾರಿಹೋಕ - The Wayfarer
+                    </h1>
+                    <p id="site-tagline" class="text-xs text-slate-400 font-medium">
+                        ಸತ್ಯವನ್ನು ಹುಡುಕಿ ಹೊರಟ ಏಕಾಂಗಿ ಸಂಚಾರಿ
+                    </p>
+                </div>
+            </div>
+
+            <!-- Language Switcher & Controls -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                    <i class="fa-solid fa-globe text-emerald-400 text-xs"></i>
+                    <select id="langSelector" onchange="switchSiteLanguage(this.value)" class="bg-transparent text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer">
+                        <option value="kn" class="bg-slate-900 text-white">📌 ಕನ್ನಡ (Kannada)</option>
+                        <option value="en" class="bg-slate-900 text-white">🌐 English</option>
+                        <option value="ur" class="bg-slate-900 text-white">🌙 اردو (Urdu)</option>
+                        <option value="ar" class="bg-slate-900 text-white">🕌 العربية (Arabic)</option>
+                    </select>
+                </div>
+
+                <!-- Supabase Connector Badge -->
+                <button onclick="toggleModal('supabaseModal')" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-plug text-[10px]"></i>
+                    <span>Database</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="max-w-6xl mx-auto px-4 overflow-x-auto">
+            <div class="flex items-center gap-1 py-2 border-t border-slate-800/60 text-xs font-semibold whitespace-nowrap">
+                <button id="nav-home" onclick="switchTab('home')" class="px-4 py-2 rounded-lg bg-emerald-600 text-white transition">
+                    🏠 <span id="tab-txt-home">ಮುಖಪುಟ / Home</span>
+                </button>
+                <button id="nav-mission" onclick="switchTab('mission')" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    🎯 <span id="tab-txt-mission">ನಮ್ಮ ಧ್ಯೇಯ / Mission</span>
+                </button>
+                <button id="nav-articles" onclick="switchTab('articles')" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    📰 <span id="tab-txt-articles">ಲೇಖನಗಳು / Articles</span>
+                </button>
+                <button id="nav-videos" onclick="switchTab('videos')" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    🎥 <span id="tab-txt-videos">ವೀಡಿಯೊಗಳು / Videos</span>
+                </button>
+                <button id="nav-about" onclick="switchTab('about')" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    ℹ️ <span id="tab-txt-about">ನಮ್ಮ ಬಗ್ಗೆ / About Us</span>
+                </button>
+                <button id="nav-admin" onclick="switchTab('admin')" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition ml-auto">
+                    ⚙️ <span id="tab-txt-admin">ಆಡಳಿತ / Admin</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT BODY CONTAINER -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-10">
+
+        <!-- ================= TAB 1: HOME PAGE ================= -->
+        <section id="tab-home" class="space-y-10">
+            
+            <!-- Hero Animated Banner Card -->
+            <div id="heroBannerCard" class="hero-animated-bg rounded-3xl p-8 md:p-12 border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-center items-start space-y-4">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="hero-badge-txt">ಜ್ಞಾನದೆಡೆಗೆ ಒಂದು ಪಯಣ / Journey to Knowledge</span>
+                </div>
+                <h2 id="hero-heading-txt" class="text-2xl md:text-4xl font-extrabold text-white leading-tight max-w-2xl">
+                    ಜಿಜ್ಞಾಸೆಯಿಂದ ಸತ್ಯ ಶೋಧನೆಯವರೆಗೆ
+                </h2>
+                <p id="hero-desc-txt" class="text-sm md:text-base text-slate-300 max-w-xl leading-relaxed">
+                    "ದಾರಿಹೋಕ" ಎನ್ನುವುದು ತಾರ್ಕಿಕ ಚಿಂತನೆ, ಸತ್ಯದ ಅನ್ವೇಷಣೆ ಮತ್ತು ಮುಕ್ತ ವೈಚಾರಿಕ ಸಂವಾದಕ್ಕಾಗಿ ಮೀಸಲಾಗಿರುವ ಶೈಕ್ಷಣಿಕ ವೇದಿಕೆಯಾಗಿದೆ.
+                </p>
+                <div class="pt-2 flex flex-wrap gap-3">
+                    <button onclick="switchTab('articles')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-900/30">
+                        <span id="btn-explore-txt">ಲೇಖನಗಳನ್ನು ಅನ್ವೇಷಿಸಿ / Explore Articles</span>
+                    </button>
+                    <button onclick="switchTab('mission')" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition">
+                        <span id="btn-mission-txt">ನಮ್ಮ ಧ್ಯೇಯ ತಿಳಿಯಿರಿ / Learn Mission</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4-Step Journey Grid -->
+            <div class="space-y-4">
+                <h3 id="steps-section-title" class="text-lg font-bold text-white flex items-center gap-2">
+                    <span class="w-1.5 h-5 bg-emerald-500 rounded-full"></span>
+                    <span>೪ ಹಂತಗಳ ಪಯಣ / 4-Step Journey</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Step 1 -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-emerald-500/40 transition">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold flex items-center justify-center text-sm">1</div>
+                        <h4 id="step1-title" class="font-bold text-white text-sm">1. ಪ್ರಶ್ನಿಸಿ (Question)</h4>
+                        <p id="step1-desc" class="text-xs text-slate-400 leading-relaxed">ಪ್ರತಿಯೊಂದು ನಂಬಿಕೆ ಮತ್ತು сಿದ್ಧಾಂತವನ್ನು ಮುಕ್ತವಾಗಿ ಪ್ರಶ್ನಿಸುವ ಧೈರ್ಯ ತಳೆಯಿರಿ.</p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-emerald-500/40 transition">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold flex items-center justify-center text-sm">2</div>
+                        <h4 id="step2-title" class="font-bold text-white text-sm">2. ಪರೀಕ್ಷಿಸಿ (Investigate)</h4>
+                        <p id="step2-desc" class="text-xs text-slate-400 leading-relaxed">ಸಾಕ್ಷ್ಯಾಧಾರಗಳನ್ನು ಮತ್ತು ಐತಿಹಾಸಿಕ ತರ್ಕಗಳನ್ನು ವಸ್ತುನಿಷ್ಠವಾಗಿ ಪರೀಕ್ಷಿಸಿ.</p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-emerald-500/40 transition">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold flex items-center justify-center text-sm">3</div>
+                        <h4 id="step3-title" class="font-bold text-white text-sm">3. ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ (Understand)</h4>
+                        <p id="step3-desc" class="text-xs text-slate-400 leading-relaxed">ಪೂರ್ವಾಗ್ರಹವಿಲ್ಲದೆ ವಿಷಯದ ಆಳವಾದ ತಿರುಳನ್ನು ಸ್ವೀಕರಿಸಿ ಅರ್ಥೈಸಿಕೊಳ್ಳಿ.</p>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-emerald-500/40 transition">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold flex items-center justify-center text-sm">4</div>
+                        <h4 id="step4-title" class="font-bold text-white text-sm">4. ಅನ್ವೇಷಿಸಿ (Discover)</h4>
+                        <p id="step4-desc" class="text-xs text-slate-400 leading-relaxed">ಸತ್ಯ ಮತ್ತು ಶಾಂತಿಯ ಸಾಮರಸ್ಯದ ಹಾದಿಯನ್ನು ಕಂಡುಕೊಳ್ಳಿ.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: MISSION PAGE ================= -->
+        <section id="tab-mission" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+                <div>
+                    <h2 id="mission-heading-txt" class="text-2xl font-extrabold text-white">
+                        ತತ್ವಗಳು / Principles
+                    </h2>
+                    <p id="mission-sub-txt" class="text-xs text-slate-400 mt-1">
+                        ಸತ್ಯದ ಶೋಧನೆ, ವಿಮರ್ಶಾತ್ಮಕ ಚಿಂತನೆ ಹಾಗೂ ಸಾಮರಸ್ಯಕ್ಕಾಗಿ ದಾರಿಹೋಕ ವೇದಿಕೆಯ 4 ಪ್ರಮುಖ ತತ್ವಗಳು:
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Principle 1 -->
+                    <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <h3 id="p1-title" class="text-sm font-bold text-emerald-400">ತತ್ವ 1: ಊಹೆಗಿಂತ ವಾಸ್ತವಕ್ಕೆ ಆದ್ಯತೆ</h3>
+                        </div>
+                        <p id="p1-desc" class="text-xs text-slate-300 leading-relaxed">ಯಾವುದೇ ವಿಷಯದಲ್ಲಿ ಆಧಾರವಿಲ್ಲದ ಊಹೆಗಳು ಅಥವಾ ವದಂತಿಗಳಿಗಿಂತ ವಾಸ್ತವಿಕ ಸತ್ಯಕ್ಕೇ ಮೊದಲ ಆದ್ಯತೆ ನೀಡುವುದು.</p>
+                    </div>
+                    <!-- Principle 2 -->
+                    <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <h3 id="p2-title" class="text-sm font-bold text-emerald-400">ತತ್ವ 2: ಕಲಿಕೆಗೆ ತೆರೆದ ಮನಸ್ಸು</h3>
+                        </div>
+                        <p id="p2-desc" class="text-xs text-slate-300 leading-relaxed">ಜ್ಞಾನಾರ್ಜನೆ, ವೈಚಾರಿಕ ಪರಿಶೀಲನೆ ಮತ್ತು ನಿರಂತರ ಕಲಿಕೆಗೆ ಸದಾ ತೆರೆದ ಮನಸ್ಸನ್ನು ಹೊಂದಿರುವುದು.</p>
+                    </div>
+                    <!-- Principle 3 -->
+                    <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <h3 id="p3-title" class="text-sm font-bold text-emerald-400">ತತ್ವ 3: ವಿಮರ್ಶಾತ್ಮಕ ಚಿಂತನೆ</h3>
+                        </div>
+                        <p id="p3-desc" class="text-xs text-slate-300 leading-relaxed">ಯಾವುದೇ ಮಾಹಿತಿಯನ್ನು ಸ್ವೀಕರಿಸುವ ಮುನ್ನ ಅದನ್ನು ತಾರ್ಕಿಕವಾಗಿ ಪ್ರಶ್ನಿಸಿ, ಮೂಲದಿಂದ ಪರಿಶೀಲಿಸುವುದು.</p>
+                    </div>
+                    <!-- Principle 4 -->
+                    <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <h3 id="p4-title" class="text-sm font-bold text-emerald-400">ತತ್ವ 4: ಸಾಮರಸ್ಯ ಮತ್ತು ಗೌರವ</h3>
+                        </div>
+                        <p id="p4-desc" class="text-xs text-slate-300 leading-relaxed">ಭಿನ್ನ ದೃಷ್ಟಿಕೋನಗಳ ನಡುವೆಯೂ ಪರಸ್ಪರ ಗೌರವ ಮತ್ತು ಆಳವಾದ ತಿಳುವಳಿಕೆಯನ್ನು ಬೆಳೆಸಿಕೊಳ್ಳುವುದು.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: ARTICLES CATALOG ================= -->
+        <section id="tab-articles" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 id="art-sec-heading" class="text-xl font-extrabold text-white">
+                        ಆಯ್ದ ಲೇಖನಗಳು / Featured Articles
+                    </h2>
+                    <p id="art-sec-desc" class="text-xs text-slate-400">
+                        ಆಯ್ಕೆ ಮಾಡಿದ ಭಾಷೆಯ ಲೇಖನಗಳನ್ನು ಮಾತ್ರ ಪ್ರದರ್ಶಿಸಲಾಗುತ್ತಿದೆ.
+                    </p>
+                </div>
+                <div id="art-active-lang-badge" class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold">
+                    Language: KN
+                </div>
+            </div>
+
+            <!-- Articles Dynamic Container -->
+            <div id="articlesListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dynamically rendered articles appear here -->
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: VIDEOS HIGHLIGHTS ================= -->
+        <section id="tab-videos" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 id="vid-sec-heading" class="text-xl font-extrabold text-white">
+                        ಸಾಕ್ಷ್ಯಚಿತ್ರಗಳು ಮತ್ತು ವೀಡಿಯೊಗಳು / Videos
+                    </h2>
+                    <p id="vid-sec-desc" class="text-xs text-slate-400 mt-1">
+                        ತಪ್ಪು ಕಲ್ಪನೆಗಳನ್ನು ಪರೀಕ್ಷಿಸುವ ಮತ್ತು ಸತ್ಯದ ಶೋಧನೆಗೆ ಉತ್ತೇಜಿಸುವ ಸಂಕ್ಷಿಪ್ತ ದೃಶ್ಯಾವಳಿಗಳು.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dynamic Video List Container -->
+            <div id="videosListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Rendered dynamically by JS -->
+            </div>
+        </section>
+
+        <!-- ================= TAB 5: ABOUT US ================= -->
+        <section id="tab-about" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-4">
+                <h2 id="about-heading-txt" class="text-2xl font-extrabold text-white">
+                    ನಮ್ಮ ಬಗ್ಗೆ / About Us
+                </h2>
+                <p id="about-body-txt" class="text-sm text-slate-300 leading-relaxed">
+                    "ದಾರಿಹೋಕ" (The Wayfarer) ಎನ್ನುವುದು ಪೂರ್ವಾಗ್ರಹವಿಲ್ಲದೆ ಸತ್ಯವನ್ನು ಹುಡುಕುವ ಪ್ರತಿಯೊಬ್ಬ ಜಿಜ್ಞಾಸುವಿಗಾಗಿ ರೂಪಿಸಲಾದ ಶೈಕ್ಷಣಿಕ ವೇದಿಕೆಯಾಗಿದೆ. ತಾರ್ಕಿಕ ಆಲೋಚನೆ, ಸತ್ಯ ಶೋಧನೆ ಹಾಗೂ ಸಾಮಾಜಿಕ ಸೌಹಾರ್ದತೆಯನ್ನು ಉತ್ತೇಜಿಸುವುದು ನಮ್ಮ ಮುಖ್ಯ ಗುರಿಯಾಗಿದೆ.
+                </p>
+            </div>
+        </section>
+
+        <!-- ================= TAB 6: ADMIN CONTROL PANEL ================= -->
+        <section id="tab-admin" class="hidden space-y-8">
+            
+            <div class="border-b border-slate-800 pb-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-emerald-400"></i>
+                        <span>ಆಡಳಿತ ಮಂಡಳಿ / Admin Control Panel</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        ಹೀರೋ ಬ್ಯಾನರ್ ಬದಲಾವಣೆ ಮತ್ತು ಹೊಸ ಲೇಖನ ಪ್ರಕಟಿಸುವ ವಿಭಾಗ
+                    </p>
+                </div>
+            </div>
+
+            <!-- Admin Section A: Hero Banner Customizer -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-image text-emerald-400"></i>
+                    <span>1. ಹೀರೋ ಬ್ಯಾನರ್ ಕಸ್ಟಮೈಜರ್ (Hero Banner Customizer)</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Hero Heading</label>
+                        <input id="admin-hero-title-input" type="text" value="ಜಿಜ್ಞಾಸೆಯಿಂದ ಸತ್ಯ ಶೋಧನೆಯವರೆಗೆ" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Hero Subtitle</label>
+                        <input id="admin-hero-desc-input" type="text" value="ತಾರ್ಕಿಕ ಚಿಂತನೆ ಮತ್ತು ಸತ್ಯದ ಅನ್ವೇಷಣೆ..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="col-span-full">
+                        <label class="block text-slate-400 mb-1">Background Image Upload (Local File)</label>
+                        <input type="file" accept="image/*" onchange="uploadHeroImageFile(event)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 text-xs">
+                    </div>
+                </div>
+                <button onclick="saveHeroBannerSettings()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition">
+                    💾 Save Banner Changes
+                </button>
+            </div>
+
+            <!-- Admin Section B: Article Publisher with Unlimited Block Freedom -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-nib text-emerald-400"></i>
+                    <span>2. ಮಲ್ಟಿಮೀಡಿಯಾ ಲೇಖನ ಪ್ರಕಾಶಕ (Multimedia Article Publisher)</span>
+                </h3>
+
+                <div class="space-y-4 text-xs">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-400 mb-1">Article Title *</label>
+                            <input id="new-art-title" type="text" placeholder="Enter Article Title" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Language *</label>
+                            <select id="new-art-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                                <option value="kn">📌 ಕನ್ನಡ (Kannada)</option>
+                                <option value="en">🌐 English</option>
+                                <option value="ur">🌙 اردو (Urdu)</option>
+                                <option value="ar">🕌 العربية (Arabic)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Content Blocks Builder -->
+                    <div class="space-y-3 pt-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block font-bold text-emerald-400">Content Blocks (Text, Images, PDFs, Videos, Audio)</label>
+                            <span class="text-[10px] text-slate-500">Add blocks in any order you like</span>
+                        </div>
+
+                        <!-- Action Toolbar to Add Blocks -->
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="addBlock('text')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-align-left text-emerald-400"></i> + Add Text Block
+                            </button>
+                            <button onclick="addBlock('image')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-image text-emerald-400"></i> + Add Image (Local File)
+                            </button>
+                            <button onclick="addBlock('pdf')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-pdf text-emerald-400"></i> + Add PDF (Local File)
+                            </button>
+                            <button onclick="addBlock('video')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-video text-emerald-400"></i> + Add Video Link (YouTube/FB/IG)
+                            </button>
+                            <button onclick="addBlock('audio')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-music text-emerald-400"></i> + Add Audio Link / SoundCloud
+                            </button>
+                        </div>
+
+                        <!-- Container holding added blocks -->
+                        <div id="dynamicBlocksContainer" class="space-y-3 pt-2">
+                            <!-- Default starting text block -->
+                            <div class="block-item bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2 relative" data-type="text">
+                                <div class="flex items-center justify-between text-[11px] text-slate-400 font-bold">
+                                    <span>📝 Text Block</span>
+                                    <button onclick="removeBlock(this)" class="text-red-400 hover:underline">Remove</button>
+                                </div>
+                                <textarea placeholder="Enter article paragraph text..." class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white text-xs h-24 focus:outline-none focus:border-emerald-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button onclick="publishArticle()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition shadow-lg shadow-emerald-900/40">
+                            🚀 Publish Article
+                        </button>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Admin Section C: Manage Published Articles (Edit & Delete) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-400"></i>
+                        <span id="admin-manage-articles-title">3. ಪ್ರಕಟಿತ ಲೇಖನಗಳ ನಿರ್ವಹಣೆ (Manage Published Articles)</span>
+                    </h3>
+                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                        Total Articles: <span id="adminArticlesCount">0</span>
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400">
+                    ಪ್ರಕಟಿತ ಲೇಖನಗಳನ್ನು ಇಲ್ಲಿಂದ ನೇರವಾಗಿ ತಿದ್ದುಪಡಿ ಮಾಡಿ (Edit) ಅಥವಾ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿಹಾಕಿ (Delete).
+                </p>
+
+                <!-- List Container for Admin Article Items -->
+                <div id="adminArticlesList" class="space-y-3 text-xs">
+                    <!-- Dynamic Items render here -->
+                </div>
+            </div>
+
+        
+            <!-- Admin Section D: Manage Video Highlights (Add, Edit & Delete) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-video text-emerald-400"></i>
+                        <span>4. ವೀಡಿಯೊ ನಿರ್ವಹಣೆ (Manage Video Highlights)</span>
+                    </h3>
+                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                        Total Videos: <span id="adminVideosCount">0</span>
+                    </span>
+                </div>
+
+                <!-- Video Add / Edit Form -->
+                <div class="space-y-4 text-xs bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h4 class="font-bold text-emerald-400" id="video-form-title">ಹೊಸ ವೀಡಿಯೊ ಸೇರಿಸಿ / Add New Video</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-400 mb-1">Video Title *</label>
+                            <input id="new-vid-title" type="text" placeholder="Enter Video Title" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Language *</label>
+                            <select id="new-vid-lang" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                                <option value="kn">📌 ಕನ್ನಡ (Kannada)</option>
+                                <option value="en">🌐 English</option>
+                                <option value="ur">🌙 اردو (Urdu)</option>
+                                <option value="ar">🕌 العربية (Arabic)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Video Embed Link (YouTube / Facebook / Instagram / Direct MP4) *</label>
+                        <input id="new-vid-url" type="text" placeholder="https://www.youtube.com/watch?v=..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Video Description</label>
+                        <textarea id="new-vid-desc" placeholder="Enter video description..." class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white h-20 focus:outline-none focus:border-emerald-500"></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="publishOrUpdateVideo()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition">
+                            🚀 Save Video
+                        </button>
+                        <button onclick="clearVideoForm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition">
+                            ❌ Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Published Videos Manager List -->
+                <div class="space-y-3 text-xs">
+                    <h4 class="font-bold text-slate-300">ಪ್ರಕಟಿತ ವೀಡಿಯೊಗಳು (Published Videos List)</h4>
+                    <div id="adminVideosList" class="space-y-3">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+
+        
+            <!-- Admin Section D: Change Admin Passcode -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-emerald-400"></i>
+                    <span>5. ಆಡಳಿತ ಲಾಗಿನ್ ಐಡಿ ಮತ್ತು ಪಾಸ್‌ಕೋಡ್ ಬದಲಾವಣೆ (Change Admin Credentials)</span>
+                </h3>
+                <p class="text-xs text-slate-400">
+                    ನಿಮ್ಮ ಆಡಳಿತ ಲಾಗಿನ್ User ID ಮತ್ತು ಪಾಸ್‌ಕೋಡ್ ಅನ್ನು ಇಲ್ಲಿಂದ ಬದಲಾಯಿಸಿ.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Admin User ID / Email</label>
+                        <input id="newAdminUserIdInput" type="email" value="zn.live.amma@gmail.com" placeholder="zn.live.amma@gmail.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">New Password</label>
+                        <input id="newAdminPasscodeInput" type="password" placeholder="Enter New Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Confirm New Password</label>
+                        <input id="confirmAdminPasscodeInput" type="password" placeholder="Confirm New Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+                <button onclick="updateAdminCredentials()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition">
+                    🔑 Update Credentials
+                </button>
+            </div>
+
+        </section><!-- FOOTER SECTION (PAGE FOOTER) -->
+    <footer class="w-full bg-slate-950 border-t border-slate-900 py-6 mt-12 text-xs text-slate-400">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h4 id="footer-heading-txt" class="font-bold text-slate-200 text-sm">
+                    ಪುಟದ ಪಾದ - Footer
+                </h4>
+                <p id="footer-desc-txt" class="text-slate-400 mt-0.5">
+                    ದಾರಿಹೋಕ: ಸತ್ಯದ ಶೋಧನೆ, ತಾರ್ಕಿಕ ಆಲೋಚನೆ ಮತ್ತು ಸೌಹಾರ್ದತೆಗೆ ಮೀಸಲಾದ ಜ್ಞಾನ ವೇದಿಕೆ.
+                </p>
+            </div>
+            <div id="footer-copy-txt" class="text-slate-500 text-[11px]">
+                © 2026 ದಾರಿಹೋಕ - The Wayfarer. ಸರ್ವ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ.
+            </div>
+        </div>
+    </footer>
+
+    <!-- SUPABASE MODAL -->
+    <div id="supabaseModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-plug text-emerald-400"></i>
+                    <span>Connect Supabase Database</span>
+                </h3>
+                <button onclick="toggleModal('supabaseModal')" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Supabase URL</label>
+                    <input id="sb-url" type="text" placeholder="https://xyz.supabase.co" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Supabase Anon Key</label>
+                    <input id="sb-key" type="password" placeholder="eyJhbGciOi..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="toggleModal('supabaseModal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Cancel</button>
+                <button onclick="saveSupabaseKeys()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC (CLEAN ESCAPING & ZERO SYNTAX ERRORS) -->
+    <script>
+        const defaultAdminUserId = 'zn.live.amma@gmail.com';
+        const defaultAdminPasscode = 'Amma@2026';
+
+        function getStoredAdminUserId() {
+            return localStorage.getItem('wayfarer_admin_userid') || defaultAdminUserId;
+        }
+        function getStoredAdminPasscode() {
+            return localStorage.getItem('wayfarer_admin_passcode') || defaultAdminPasscode;
+        }
+    
+        // Language Translation Dictionary
+        const langDict = {
+            kn: {
+                dir: "ltr",
+                siteTitle: "ದಾರಿಹೋಕ - The Wayfarer",
+                siteTagline: "ಸತ್ಯವನ್ನು ಹುಡುಕಿ ಹೊರಟ ಏಕಾಂಗಿ ಸಂಚಾರಿ",
+                tabHome: "ಮುಖಪುಟ / Home",
+                tabMission: "ನಮ್ಮ ಧ್ಯೇಯ / Mission",
+                tabArticles: "ಲೇಖನಗಳು / Articles",
+                tabVideos: "ವೀಡಿಯೊಗಳು / Videos",
+                tabAbout: "ನಮ್ಮ ಬಗ್ಗೆ / About Us",
+                tabAdmin: "ಆಡಳಿತ / Admin",
+                heroBadge: "ಜ್ಞಾನದೆಡೆಗೆ ಒಂದು ಪಯಣ / Journey to Knowledge",
+                heroHeading: "ಜಿಜ್ಞಾಸೆಯಿಂದ ಸತ್ಯ ಶೋಧನೆಯವರೆಗೆ",
+                heroDesc: "ದಾರಿಹೋಕ ಎನ್ನುವುದು ತಾರ್ಕಿಕ ಚಿಂತನೆ, ಸತ್ಯದ ಅನ್ವೇಷಣೆ ಮತ್ತು ಮುಕ್ತ ವೈಚಾರಿಕ ಸಂವಾದಕ್ಕಾಗಿ ಮೀಸಲಾಗಿರುವ ಶೈಕ್ಷಣಿಕ ವೇದಿಕೆಯಾಗಿದೆ.",
+                btnExplore: "ಲೇಖನಗಳನ್ನು ಅನ್ವೇಷಿಸಿ / Explore Articles",
+                btnMission: "ನಮ್ಮ ಧ್ಯೇಯ ತಿಳಿಯಿರಿ / Learn Mission",
+                stepsSectionTitle: "೪ ಹಂತಗಳ ಪಯಣ / 4-Step Journey",
+                step1Title: "1. ಪ್ರಶ್ನಿಸಿ (Question)",
+                step1Desc: "ಪ್ರತಿಯೊಂದು ನಂಬಿಕೆ ಮತ್ತು ಸಿದ್ಧಾಂತವನ್ನು ಮುಕ್ತವಾಗಿ ಪ್ರಶ್ನಿಸುವ ಧೈರ್ಯ ತಳೆಯಿರಿ.",
+                step2Title: "2. ಪರೀಕ್ಷಿಸಿ (Investigate)",
+                step2Desc: "ಸಾಕ್ಷ್ಯಾಧಾರಗಳನ್ನು ಮತ್ತು ಐತಿಹಾಸಿಕ ತರ್ಕಗಳನ್ನು ವಸ್ತುನಿಷ್ಠವಾಗಿ ಪರೀಕ್ಷಿಸಿ.",
+                step3Title: "3. ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ (Understand)",
+                step3Desc: "ಪೂರ್ವಾಗ್ರಹವಿಲ್ಲದೆ ವಿಷಯದ ಆಳವಾದ ತಿರುಳನ್ನು ಸ್ವೀಕರಿಸಿ ಅರ್ಥೈಸಿಕೊಳ್ಳಿ.",
+                step4Title: "4. ಅನ್ವೇಷಿಸಿ (Discover)",
+                step4Desc: "ಸತ್ಯ ಮತ್ತು ಶಾಂತಿಯ ಸಾಮರಸ್ಯದ ಹಾದಿಯನ್ನು ಕಂಡುಕೊಳ್ಳಿ.",
+                missionHeading: "ತತ್ವಗಳು / Principles",
+                missionSub: "ಸತ್ಯದ ಶೋಧನೆ, ವಿಮರ್ಶಾತ್ಮಕ ಚಿಂತನೆ ಹಾಗೂ ಸಾಮರಸ್ಯಕ್ಕಾಗಿ ದಾರಿಹೋಕ ವೇದಿಕೆಯ 4 ಪ್ರಮುಖ ತತ್ವಗಳು:",
+                p1Title: "ತತ್ವ 1: ಊಹೆಗಿಂತ ವಾಸ್ತವಕ್ಕೆ ಆದ್ಯತೆ",
+                p1Desc: "ಯಾವುದೇ ವಿಷಯದಲ್ಲಿ ಆಧಾರವಿಲ್ಲದ ಊಹೆಗಳು ಅಥವಾ ವದಂತಿಗಳಿಗಿಂತ ವಾಸ್ತವಿಕ ಸತ್ಯಕ್ಕೇ ಮೊದಲ ಆದ್ಯತೆ ನೀಡುವುದು.",
+                p2Title: "ತತ್ವ 2: ಕಲಿಕೆಗೆ ತೆರೆದ ಮನಸ್ಸು",
+                p2Desc: "ಜ್ಞಾನಾರ್ಜನೆ, ವೈಚಾರಿಕ ಪರಿಶೀಲನೆ ಮತ್ತು ನಿರಂತರ ಕಲಿಕೆಗೆ ಸದಾ ತೆರೆದ ಮನಸ್ಸನ್ನು ಹೊಂದಿರುವುದು.",
+                p3Title: "ತತ್ವ 3: ವಿಮರ್ಶಾತ್ಮಕ ಚಿಂತನೆ",
+                p3Desc: "ಯಾವುದೇ ಮಾಹಿತಿಯನ್ನು ಸ್ವೀಕರಿಸುವ ಮುನ್ನ ಅದನ್ನು ತಾರ್ಕಿಕವಾಗಿ ಪ್ರಶ್ನಿಸಿ, ಮೂಲದಿಂದ ಪರಿಶೀಲಿಸುವುದು.",
+                p4Title: "ತತ್ವ 4: ಸಾಮರಸ್ಯ ಮತ್ತು ಗೌರವ",
+                p4Desc: "ಭಿನ್ನ ದೃಷ್ಟಿಕೋನಗಳ ನಡುವೆಯೂ ಪರಸ್ಪರ ಗೌರವ ಮತ್ತು ಆಳವಾದ ತಿಳುವಳಿಕೆಯನ್ನು ಬೆಳೆಸಿಕೊಳ್ಳುವುದು.",
+                artSecHeading: "ಆಯ್ದ ಲೇಖನಗಳು / Featured Articles",
+                artSecDesc: "ಆಯ್ಕೆ ಮಾಡಿದ ಭಾಷೆಯ ಲೇಖನಗಳನ್ನು ಮಾತ್ರ ಪ್ರದರ್ಶಿಸಲಾಗುತ್ತಿದೆ.",
+                vidSecHeading: "ಸಾಕ್ಷ್ಯಚಿತ್ರಗಳು ಮತ್ತು ವೀಡಿಯೊಗಳು / Videos",
+                vidSecDesc: "ತಪ್ಪು ಕಲ್ಪನೆಗಳನ್ನು ಪರೀಕ್ಷಿಸುವ ಮತ್ತು ಸತ್ಯದ ಶೋಧನೆಗೆ ಉತ್ತೇಜಿಸುವ ಸಂಕ್ಷಿಪ್ತ ದೃಶ್ಯಾವಳಿಗಳು.",
+                aboutHeading: "ನಮ್ಮ ಬಗ್ಗೆ / About Us",
+                aboutBody: "ದಾರಿಹೋಕ (The Wayfarer) ಎನ್ನುವುದು ಪೂರ್ವಾಗ್ರಹವಿಲ್ಲದೆ ಸತ್ಯವನ್ನು ಹುಡುಕುವ ಪ್ರತಿಯೊಬ್ಬ ಜಿಜ್ಞಾಸುವಿಗಾಗಿ ರೂಪಿಸಲಾದ ಶೈಕ್ಷಣಿಕ ವೇದಿಕೆಯಾಗಿದೆ. ತಾರ್ಕಿಕ ಆಲೋಚನೆ, ಸತ್ಯ ಶೋಧನೆ ಹಾಗೂ ಸಾಮಾಜಿಕ ಸೌಹಾರ್ದತೆಯನ್ನು ಉತ್ತೇಜಿಸುವುದು ನಮ್ಮ ಮುಖ್ಯ ಗುರಿಯಾಗಿದೆ.",
+                footerHeading: "ಪುಟದ ಪಾದ - Footer",
+                footerDesc: "ದಾರಿಹೋಕ: ಸತ್ಯದ ಶೋಧನೆ, ತಾರ್ಕಿಕ ಆಲೋಚನೆ ಮತ್ತು ಸೌಹಾರ್ದತೆಗೆ ಮೀಸಲಾದ ಜ್ಞಾನ ವೇದಿಕೆ.",
+                footerCopy: "© 2026 ದಾರಿಹೋಕ - The Wayfarer. ಸರ್ವ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ."
+            },
+            en: {
+                dir: "ltr",
+                siteTitle: "The Wayfarer",
+                siteTagline: "A Solitary Wanderer in Pursuit of Truth",
+                tabHome: "Home",
+                tabMission: "Mission",
+                tabArticles: "Articles",
+                tabVideos: "Videos",
+                tabAbout: "About Us",
+                tabAdmin: "Admin",
+                heroBadge: "Journey to Knowledge",
+                heroHeading: "From Inquiry to Understanding",
+                heroDesc: "The Wayfarer is an educational platform dedicated to logical inquiry, truth-seeking, and objective dialogue.",
+                btnExplore: "Explore Articles",
+                btnMission: "Our Mission",
+                stepsSectionTitle: "4-Step Journey",
+                step1Title: "1. Question",
+                step1Desc: "Embrace the courage to freely question every claim and belief.",
+                step2Title: "2. Investigate",
+                step2Desc: "Examine objective evidence and historical logic rigorously.",
+                step3Title: "3. Understand",
+                step3Desc: "Grasp the underlying essence without bias or prejudice.",
+                step4Title: "4. Discover",
+                step4Desc: "Uncover the path of truth, harmony, and peace.",
+                missionHeading: "Principles",
+                missionSub: "The 4 core principles guiding The Wayfarer platform for rational inquiry and harmony:",
+                p1Title: "Principle 1: Reality Over Assumption",
+                p1Desc: "Prioritizing objective reality and verifiable evidence over rumors and baseless speculation.",
+                p2Title: "Principle 2: Open-Minded Learning",
+                p2Desc: "Maintaining an open mind for lifelong learning, inquiry, and intellectual growth.",
+                p3Title: "Principle 3: Critical Thinking",
+                p3Desc: "Applying critical evaluation to examine information from original sources.",
+                p4Title: "Principle 4: Harmony & Respect",
+                p4Desc: "Fostering mutual respect and deep understanding across differing viewpoints.",
+                artSecHeading: "Featured Articles",
+                artSecDesc: "Showing articles strictly in the selected language.",
+                vidSecHeading: "Documentaries & Videos",
+                vidSecDesc: "Short videos designed to test misconceptions and encourage truth-seeking.",
+                aboutHeading: "About The Wayfarer",
+                aboutBody: "The Wayfarer is an educational initiative built for seekers of truth regardless of background. Our goal is to foster logical thinking, factual investigation, and peaceful dialogue.",
+                footerHeading: "Footer",
+                footerDesc: "The Wayfarer: Dedicated to truth-seeking, rational thought, and social harmony.",
+                footerCopy: "© 2026 The Wayfarer. All rights reserved."
+            },
+            ur: {
+                dir: "rtl",
+                siteTitle: "راهرو - The Wayfarer",
+                siteTagline: "حق کی تلاش میں ایک تنہا مسافر",
+                tabHome: "صفحہ اول / Home",
+                tabMission: "ہمارا مقصد / Mission",
+                tabArticles: "مضامین / Articles",
+                tabVideos: "ویڈیوز / Videos",
+                tabAbout: "ہمارے بارے میں / About Us",
+                tabAdmin: "انتظامیہ / Admin",
+                heroBadge: "علم کی طرف ایک سفر / Journey to Knowledge",
+                heroHeading: "تجسس سے حقیقت کی تلاش تک",
+                heroDesc: "راهرو ایک تعلیمی پلیٹ فارم ہے جو منطقی سوچ، حقیقت کی تلاش اور باہمی مکالمے کے لیے وقف ہے۔",
+                btnExplore: "مضامین کا مطالعہ کریں / Explore Articles",
+                btnMission: "مقصد جانیں / Learn Mission",
+                stepsSectionTitle: "4 مرحلہ وار سفر / 4-Step Journey",
+                step1Title: "1. سوال اٹھائیں (Question)",
+                step1Desc: "ہر دعوے اور تصور کو آزادانہ طور پر چیلنج کرنے کا حوصلہ پیدا کریں۔",
+                step2Title: "2. تحقیق کریں (Investigate)",
+                step2Desc: "شواہد اور تاریخی منطق کا غیر جانبدارانہ جائزہ لیں۔",
+                step3Title: "3. سمجھیں (Understand)",
+                step3Desc: "تعصب سے پاک ہو کر موضوع کے بنیادی جوہر کو سمجھیں۔",
+                step4Title: "4. دریافت کریں (Discover)",
+                step4Desc: "سچائی اور امن کی راہ کو دریافت کریں۔",
+                missionHeading: "بنیادی اصول / Principles",
+                missionSub: "راهرو پلیٹ فارم کے 4 بنیادی اصول جو فکر اور ہم آہنگی کو فروغ دیتے ہیں:",
+                p1Title: "اصول 1: قیاس پر حقیقت کو ترجیح",
+                p1Desc: "غیر مصدقہ افواہوں کے مقابلے میں عینی شواہد اور حقیقت کو اولیت دینا۔",
+                p2Title: "اصول 2: سیکھنے کا کھلا ذہن",
+                p2Desc: "علم کے حصول اور مسلسل فکر کے لیے ہمیشہ اپنے ذہن کو کھلا رکھنا۔",
+                p3Title: "اصول 3: تنقیدی جائزہ",
+                p3Desc: "کسی بھی معلومات کو قبول کرنے سے پہلے بنیادی ذرائع سے اس کی تصدیق کرنا۔",
+                p4Title: "اصول 4: ہم آہنگی اور احترام",
+                p4Desc: "مختلف نظریات کے باوجود باہمی احترام اور گہرے فہم کو پروان چڑھانا۔",
+                artSecHeading: "منتخب مضامین / Featured Articles",
+                artSecDesc: "صرف منتخب کردہ زبان کے مضامین دکھائے جا رہے ہیں۔",
+                vidSecHeading: "مستند ویڈیوز / Videos",
+                vidSecDesc: "غلط فہمیوں کا ازالہ کرنے والی اور حق کی تلاش پر مبنی مختصر ویڈیوز۔",
+                aboutHeading: "ہمارے بارے میں / About Us",
+                aboutBody: "راهرو ایک تعلیمی کوشش ہے جو بغیر کسی تعصب کے حقیقت کی تلاش میں نکلنے والے ہر شخص کے لیے بنائی گئی ہے۔",
+                footerHeading: "صفحہ کا نچلا حصہ / Footer",
+                footerDesc: "راهرو: حق کی تلاش اور فکری ہم آہنگی کے لیے وقف تعلیمی پلیٹ فارم۔",
+                footerCopy: "© 2026 راهرو - The Wayfarer. جملہ حقوق محفوظ ہیں۔"
+            },
+            ar: {
+                dir: "rtl",
+                siteTitle: "السالك - The Wayfarer",
+                siteTagline: "مسافر ينشد الحقيقة والوعي",
+                tabHome: "الرئيسية / Home",
+                tabMission: "رسالتنا / Mission",
+                tabArticles: "المقالات / Articles",
+                tabVideos: "المرئيات / Videos",
+                tabAbout: "من نحن / About Us",
+                tabAdmin: "الإدارة / Admin",
+                heroBadge: "رحلة نحو المعرفة / Journey to Knowledge",
+                heroHeading: "من التساؤل إلى اليقين والحقيقة",
+                heroDesc: "السالك منصة تعليمية تهدف إلى تعزيز التفكير المنطقي والبحث عن الحقيقة والحوار العلمي الحر.",
+                btnExplore: "استكشف المقالات / Explore Articles",
+                btnMission: "تعرف على رسالتنا / Learn Mission",
+                stepsSectionTitle: "رحلة من 4 مراحل / 4-Step Journey",
+                step1Title: "1. تساءل (Question)",
+                step1Desc: "امتلك الشجاعة للتساؤل عن الأفكار والفرضيات دون تعصب.",
+                step2Title: "2. ابحث وافحص (Investigate)",
+                step2Desc: "افحص الأدلة والوقائع التاريخية بمنهجية موضوعية.",
+                step3Title: "3. افهم العمق (Understand)",
+                step3Desc: "استوعب جوهر الحقيقة بتجرد عن الأحكام المسبقة.",
+                step4Title: "4. اكتشف الحقيقة (Discover)",
+                step4Desc: "اكتشف طريق الحق والسلام والانسجام.",
+                missionHeading: "المبادئ الرئيسية / Principles",
+                missionSub: "المبادئ الأربعة التي تقوم عليها منصة السالك لتنمية الفكر الحر والانسجام:",
+                p1Title: "المبدأ 1: الواقع فوق الافتراض",
+                p1Desc: "إعطاء الأولوية للحقائق والوقائع الثابتة بدلاً من الظنون والشائعات.",
+                p2Title: "المبدأ 2: الانفتاح على التعلم",
+                p2Desc: "الحفاظ على عقل مفتوح للتعلم المستمر والتحري المنهجي.",
+                p3Title: "المبدأ 3: التفكير النقدي",
+                p3Desc: "إعمال العقل والتثبت من الأخبار والمعلومات من مصادرها الأصلية.",
+                p4Title: "المبدأ 4: الاحترام والانسجام",
+                p4Desc: "تعزيز الاحترام المتبادل بين مختلف الآراء ووجهات النظر.",
+                artSecHeading: "المقالات المختارة / Featured Articles",
+                artSecDesc: "عرض المقالات الخاصة باللغة المختارة فقط.",
+                vidSecHeading: "المرئيات والوثائقيات / Videos",
+                vidSecDesc: "مقاطع مرئية لتمحيص الشبهات وتحفيز البحث عن الحقيقة.",
+                aboutHeading: "من نحن / About Us",
+                aboutBody: "منصة السالك مبادرة تعليمية موجهة لكل باحث عن الحقيقة بعيداً عن التعصب والأحكام المسبقة.",
+                footerHeading: "تذييل الصفحة / Footer",
+                footerDesc: "السالك: منصة موجهة للبحث عن الحقيقة والتفكير المنطقي.",
+                footerCopy: "© 2026 السالك - The Wayfarer. جميع الحقوق محفوظة."
+            }
+        };
+
+        // Application Global State
+        let currentLang = 'kn';
+        let isAdminLoggedIn = false;
+        
+        
+        function getStoredPasscode() {
+            return localStorage.getItem('wayfarer_admin_passcode') || defaultPasscode;
+        }
+
+        let editingArticleId = null;
+        let editingVideoId = null;
+
+        // Sample Articles Catalog
+        let articlesCatalog = [
+            {
+                id: 1,
+                title: "ಅನಾಥನ ನೋಯಿಸದಿರು",
+                lang: "kn",
+                blocks: [
+                    { type: "text", content: "ಪ್ರವಾದಿ ಮುಹಮ್ಮದ್ (ಸಲ್ಲಲ್ಲಾಹು ಅಲೈಹಿ ವ ಸಲ್ಲಮ್) ಅವರ ಕರುಣೆಯ ಅಹಿಂಸಾ ತತ್ವಗಳು ಮತ್ತು ಸೌಹಾರ್ದತೆಯ ಮಾರ್ಗ." },
+                    { type: "audio", content: "https://on.soundcloud.com/PIXGMQFmDZIrgVzHWs" }
+                ],
+                likes: 18,
+                views: 240
+            },
+            {
+                id: 2,
+                title: "ಗುಹೆಯ ಸಂಗಡಿಗರು",
+                lang: "kn",
+                blocks: [
+                    { type: "text", content: "ಇದು ಸತ್ಯದ ಇತಿಹಾಸದ ಕೆಲವು ಯುವಕರ ಸಾಹಸ ದೀರ್ಘ ಕಥೆ ಮತ್ತು ಐತಿಹಾಸಿಕ ವಿಶ್ಲೇಷಣೆ." }
+                ],
+                likes: 12,
+                views: 180
+            },
+            {
+                id: 3,
+                title: "The Search for Truth in the Modern World",
+                lang: "en",
+                blocks: [
+                    { type: "text", content: "An exploration of critical thinking, logic, and verifying evidence in an age of information overload." }
+                ],
+                likes: 25,
+                views: 310
+            },
+            {
+                id: 4,
+                title: "حقيقة السعي وراء المعرفة",
+                lang: "ar",
+                blocks: [
+                    { type: "text", content: "منهجية الفكر الحر والتثبت من الأخبار والمعلومات من مصادرها الأصلية." }
+                ],
+                likes: 30,
+                views: 420
+            }
+        ];
+
+        // Sample Videos Catalog
+        let videosCatalog = [
+            {
+                id: 1,
+                title: "1. ಸತ್ಯದ ಶೋಧನೆ - Search for Truth",
+                lang: "kn",
+                videoUrl: "https://www.youtube.com/watch?v=wCT7WYoL1gU",
+                desc: "ಏಕಾಂಗಿ ಸಂಚಾರಿಯ ಜ್ಞಾನ ಪಯಣ ಮತ್ತು ವೈಚಾರಿಕ ಅನ್ವೇಷಣೆ.",
+                views: 140,
+                likes: 18
+            },
+            {
+                id: 2,
+                title: "2. ತಪ್ಪು ಕಲ್ಪನೆಗಳ ಪರೀಕ್ಷೆ",
+                lang: "kn",
+                videoUrl: "https://www.youtube.com/watch?v=wCT7WYoL1gU",
+                desc: "ಮಿಥ್ಯೆಗಳಿಂದ ವಾಸ್ತವ ಸತ್ಯವನ್ನು ಪ್ರತ್ಯೇಕಿಸುವ ಮಾರ್ಗಗಳು.",
+                views: 95,
+                likes: 12
+            },
+            {
+                id: 3,
+                title: "1. The Search for Truth - Educational Video",
+                lang: "en",
+                videoUrl: "https://www.youtube.com/watch?v=wCT7WYoL1gU",
+                desc: "A rational journey exploring objective evidence and logical inquiry.",
+                views: 230,
+                likes: 32
+            },
+            {
+                id: 4,
+                title: "1. رحلة البحث عن الحقيقة",
+                lang: "ar",
+                videoUrl: "https://www.youtube.com/watch?v=wCT7WYoL1gU",
+                desc: "وثائقي مرئي قائم على الأدلة التاريخية والتحليل العقلاني.",
+                views: 310,
+                likes: 45
+            }
+        ];
+
+        // Language Switcher Function
+        function switchSiteLanguage(lang) {
+            currentLang = lang;
+            const t = langDict[lang] || langDict.kn;
+
+            // Set RTL/LTR direction
+            document.documentElement.dir = t.dir;
+
+            // Update Header & Brand
+            document.getElementById('site-title').innerText = t.siteTitle;
+            document.getElementById('site-tagline').innerText = t.siteTagline;
+
+            // Update Tabs
+            document.getElementById('tab-txt-home').innerText = t.tabHome;
+            document.getElementById('tab-txt-mission').innerText = t.tabMission;
+            document.getElementById('tab-txt-articles').innerText = t.tabArticles;
+            document.getElementById('tab-txt-videos').innerText = t.tabVideos;
+            document.getElementById('tab-txt-about').innerText = t.tabAbout;
+            document.getElementById('tab-txt-admin').innerText = t.tabAdmin;
+
+            // Update Hero Banner
+            document.getElementById('hero-badge-txt').innerText = t.heroBadge;
+            document.getElementById('hero-heading-txt').innerText = t.heroHeading;
+            document.getElementById('hero-desc-txt').innerText = t.heroDesc;
+            document.getElementById('btn-explore-txt').innerText = t.btnExplore;
+            document.getElementById('btn-mission-txt').innerText = t.btnMission;
+
+            // Update 4-Step Journey
+            document.getElementById('steps-section-title').innerText = t.stepsSectionTitle;
+            document.getElementById('step1-title').innerText = t.step1Title;
+            document.getElementById('step1-desc').innerText = t.step1Desc;
+            document.getElementById('step2-title').innerText = t.step2Title;
+            document.getElementById('step2-desc').innerText = t.step2Desc;
+            document.getElementById('step3-title').innerText = t.step3Title;
+            document.getElementById('step3-desc').innerText = t.step3Desc;
+            document.getElementById('step4-title').innerText = t.step4Title;
+            document.getElementById('step4-desc').innerText = t.step4Desc;
+
+            // Update Mission & Principles
+            document.getElementById('mission-heading-txt').innerText = t.missionHeading;
+            document.getElementById('mission-sub-txt').innerText = t.missionSub;
+            document.getElementById('p1-title').innerText = t.p1Title;
+            document.getElementById('p1-desc').innerText = t.p1Desc;
+            document.getElementById('p2-title').innerText = t.p2Title;
+            document.getElementById('p2-desc').innerText = t.p2Desc;
+            document.getElementById('p3-title').innerText = t.p3Title;
+            document.getElementById('p3-desc').innerText = t.p3Desc;
+            document.getElementById('p4-title').innerText = t.p4Title;
+            document.getElementById('p4-desc').innerText = t.p4Desc;
+
+            // Update Article & Video Section Titles
+            document.getElementById('art-sec-heading').innerText = t.artSecHeading;
+            document.getElementById('art-sec-desc').innerText = t.artSecDesc;
+            document.getElementById('vid-sec-heading').innerText = t.vidSecHeading;
+            document.getElementById('vid-sec-desc').innerText = t.vidSecDesc;
+
+            // Update About & Footer
+            document.getElementById('about-heading-txt').innerText = t.aboutHeading;
+            document.getElementById('about-body-txt').innerText = t.aboutBody;
+            document.getElementById('footer-heading-txt').innerText = t.footerHeading;
+            document.getElementById('footer-desc-txt').innerText = t.footerDesc;
+            document.getElementById('footer-copy-txt').innerText = t.footerCopy;
+
+            // Re-render Articles & Videos filtered ONLY for this language
+            renderFilteredArticles();
+            renderFilteredVideos();
+        }
+
+        // Robust Audio Embed Helper
+        function getAudioEmbedHTML(url) {
+            if (!url) return '';
+            const cleanUrl = url.trim();
+
+            // Check if SoundCloud link
+            if (cleanUrl.includes('soundcloud.com')) {
+                let embedSrc = cleanUrl;
+                if (!cleanUrl.includes('player/?url=')) {
+                    embedSrc = `https://w.soundcloud.com/player/?url=${encodeURIComponent(cleanUrl)}&color=%2310b981&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`;
+                }
+                return `
+                    <div class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <iframe width="100%" height="120" scrolling="no" frameborder="no" allow="autoplay" src="${embedSrc}"></iframe>
+                        <div class="text-[10px] text-slate-400 flex items-center justify-between px-1">
+                            <span><i class="fa-brands fa-soundcloud text-orange-400"></i> SoundCloud Audio</span>
+                            <a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:underline">🎧 Open in SoundCloud</a>
+                        </div>
+                    </div>`;
+            }
+
+            // Direct audio file or base64 data URL
+            if (cleanUrl.match(/\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i) || cleanUrl.startsWith('data:audio/')) {
+                return `
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex items-center gap-2 text-xs text-slate-300 font-medium">
+                            <i class="fa-solid fa-music text-emerald-400"></i>
+                            <span>Audio Player</span>
+                        </div>
+                        <audio controls src="${cleanUrl}" class="w-full h-9 rounded-lg"></audio>
+                    </div>`;
+            }
+
+            // General audio link or embed URL fallback
+            return `
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300 flex items-center gap-2">
+                            <i class="fa-solid fa-headphones text-emerald-400"></i> Audio Stream
+                        </span>
+                        <a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-circle-play"></i> Play / Open Audio
+                        </a>
+                    </div>
+                    <audio controls src="${cleanUrl}" class="w-full h-8 mt-1" onerror="this.style.display='none'"></audio>
+                </div>`;
+        }
+
+        // Robust Video Embed Helper
+        function getVideoEmbedHTML(url) {
+            if (!url) return '';
+            const cleanUrl = url.trim();
+
+            // YouTube URLs
+            if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
+                let videoId = '';
+                if (cleanUrl.includes('youtu.be/')) {
+                    videoId = cleanUrl.split('youtu.be/')[1].split('?')[0].split('&')[0];
+                } else if (cleanUrl.includes('watch?v=')) {
+                    videoId = cleanUrl.split('watch?v=')[1].split('&')[0];
+                } else if (cleanUrl.includes('shorts/')) {
+                    videoId = cleanUrl.split('shorts/')[1].split('?')[0].split('&')[0];
+                } else if (cleanUrl.includes('embed/')) {
+                    videoId = cleanUrl.split('embed/')[1].split('?')[0];
+                }
+
+                const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : cleanUrl;
+                return `
+                    <div class="aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-md">
+                        <iframe src="${embedUrl}" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>`;
+            }
+
+            // Facebook Video URLs
+            if (cleanUrl.includes('facebook.com')) {
+                const fbEmbed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanUrl)}&show_text=false&width=560`;
+                return `
+                    <div class="aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-md">
+                        <iframe src="${fbEmbed}" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                    </div>`;
+            }
+
+            // Instagram Reels/Posts
+            if (cleanUrl.includes('instagram.com')) {
+                let instaEmbed = cleanUrl;
+                if (!instaEmbed.endsWith('/')) instaEmbed += '/';
+                if (!instaEmbed.includes('/embed')) instaEmbed += 'embed/';
+                return `
+                    <div class="aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-md">
+                        <iframe src="${instaEmbed}" class="w-full h-full" frameborder="0" allowtransparency="true" allowfullscreen></iframe>
+                    </div>`;
+            }
+
+            // Direct Video File or Data URL
+            if (cleanUrl.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) || cleanUrl.startsWith('data:video/')) {
+                return `
+                    <div class="aspect-video bg-black rounded-xl overflow-hidden border border-slate-800">
+                        <video controls src="${cleanUrl}" class="w-full h-full object-contain"></video>
+                    </div>`;
+            }
+
+            // Fallback iframe
+            return `
+                <div class="aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 relative flex items-center justify-center">
+                    <iframe src="${cleanUrl}" class="w-full h-full" frameborder="0" allowfullscreen onerror="this.style.display='none'"></iframe>
+                    <div class="absolute bottom-2 right-2">
+                        <a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Video
+                        </a>
+                    </div>
+                </div>`;
+        }
+
+        // Render Articles Filtered ONLY for Current Selected Language
+        function renderFilteredArticles() {
+            const container = document.getElementById('articlesListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Strictly filter articles for current selected language ONLY
+            const filtered = articlesCatalog.filter(a => a.lang === currentLang);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-2"></i>
+                        <p class="text-xs text-slate-400 font-medium">ಈ ಭಾಷೆಯಲ್ಲಿ ಲೇಖನಗಳಿಲ್ಲ (No articles available for this language yet).</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(art => {
+                const card = document.createElement('div');
+                card.id = 'article-' + art.id;
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hover:border-emerald-500/40 transition flex flex-col justify-between transition-all duration-500";
+
+                // Render article blocks inside card
+                let blocksHTML = '';
+                if (art.blocks && art.blocks.length > 0) {
+                    art.blocks.forEach(b => {
+                        if (b.type === 'text') {
+                            blocksHTML += `<p class="text-xs text-slate-300 leading-relaxed">${b.content}</p>`;
+                        } else if (b.type === 'image') {
+                            blocksHTML += `<img src="${b.content}" class="w-full h-48 object-cover rounded-xl border border-slate-800">`;
+                        } else if (b.type === 'pdf') {
+                            blocksHTML += `
+                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                                    <span class="text-xs text-slate-300"><i class="fa-solid fa-file-pdf text-red-400"></i> Attached Document</span>
+                                    <a href="${b.content}" download="article-document.pdf" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold">Download PDF</a>
+                                </div>`;
+                        } else if (b.type === 'video') {
+                            blocksHTML += getVideoEmbedHTML(b.content);
+                        } else if (b.type === 'audio') {
+                            blocksHTML += getAudioEmbedHTML(b.content);
+                        }
+                    });
+                }
+
+                // Extra controls if Admin is logged in
+                let adminActionBtns = '';
+                if (isAdminLoggedIn) {
+                    adminActionBtns = `
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+                            <button onclick="editArticle(${art.id})" class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </button>
+                            <button onclick="deleteArticle(${art.id})" class="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                        </div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                ${art.lang.toUpperCase()}
+                            </span>
+                            <div class="flex items-center gap-3 text-xs text-slate-400">
+                                <span><i class="fa-regular fa-eye"></i> ${art.views}</span>
+                                <button onclick="likePost('article', ${art.id})" class="hover:text-red-400 transition"><i class="fa-regular fa-heart"></i> ${art.likes}</button>
+                            </div>
+                        </div>
+                        <h3 class="text-lg font-bold text-white leading-snug">${art.title}</h3>
+                        <div class="space-y-3 pt-1">
+                            ${blocksHTML}
+                        </div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <div class="border-t border-slate-800/80 pt-2 flex items-center justify-between">
+                            <button onclick="sharePost('article', ${art.id})" class="text-xs text-slate-400 hover:text-emerald-400 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-share"></i> Share
+                            </button>
+                        </div>
+                        ${adminActionBtns}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Render Videos Filtered ONLY for Current Selected Language
+        function renderFilteredVideos() {
+            const container = document.getElementById('videosListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Strictly filter videos for current selected language ONLY
+            const filtered = videosCatalog.filter(v => v.lang === currentLang);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <i class="fa-solid fa-film text-3xl text-slate-600 mb-2"></i>
+                        <p class="text-xs text-slate-400 font-medium">ಈ ಭಾಷೆಯಲ್ಲಿ ವೀಡಿಯೊಗಳಿಲ್ಲ (No videos available for this language yet).</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(vid => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 hover:border-emerald-500/40 transition flex flex-col justify-between";
+
+                const playerHTML = getVideoEmbedHTML(vid.videoUrl);
+
+                // Admin Action buttons on Video Card
+                let adminVidBtns = '';
+                if (isAdminLoggedIn) {
+                    adminVidBtns = `
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+                            <button onclick="editVideo(${vid.id})" class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Edit Video
+                            </button>
+                            <button onclick="deleteVideo(${vid.id})" class="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-trash"></i> Delete Video
+                            </button>
+                        </div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                ${vid.lang.toUpperCase()}
+                            </span>
+                            <div class="flex items-center gap-3 text-xs text-slate-400">
+                                <span><i class="fa-regular fa-eye"></i> ${vid.views}</span>
+                                <button onclick="likePost('video', ${vid.id})" class="hover:text-red-400 transition"><i class="fa-regular fa-heart"></i> ${vid.likes}</button>
+                            </div>
+                        </div>
+                        ${playerHTML}
+                        <h3 class="text-base font-bold text-white leading-snug">${vid.title}</h3>
+                        ${vid.desc ? `<p class="text-xs text-slate-300 leading-relaxed">${vid.desc}</p>` : ''}
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <div class="border-t border-slate-800/80 pt-2 flex items-center justify-between">
+                            <button onclick="sharePost('video', ${vid.id})" class="text-xs text-slate-400 hover:text-emerald-400 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-share"></i> Share
+                            </button>
+                        </div>
+                        ${adminVidBtns}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Render Published Articles List in Admin Dashboard
+        function renderAdminArticlesList() {
+            const list = document.getElementById('adminArticlesList');
+            const count = document.getElementById('adminArticlesCount');
+            if (!list) return;
+
+            if (count) count.innerText = articlesCatalog.length;
+            list.innerHTML = '';
+
+            if (articlesCatalog.length === 0) {
+                list.innerHTML = `<div class="text-slate-500 py-4 text-center">ಯಾವುದೇ ಲೇಖನಗಳಿಲ್ಲ (No published articles found).</div>`;
+                return;
+            }
+
+            articlesCatalog.forEach((art) => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between gap-3";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            ${art.lang.toUpperCase()}
+                        </span>
+                        <span class="font-bold text-white truncate max-w-xs">${art.title}</span>
+                        <span class="text-[10px] text-slate-500"><i class="fa-regular fa-eye"></i> ${art.views} | <i class="fa-regular fa-heart"></i> ${art.likes}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="editArticle(${art.id})" class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button onclick="deleteArticle(${art.id})" class="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Render Published Videos List in Admin Dashboard
+        function renderAdminVideosList() {
+            const list = document.getElementById('adminVideosList');
+            const count = document.getElementById('adminVideosCount');
+            if (!list) return;
+
+            if (count) count.innerText = videosCatalog.length;
+            list.innerHTML = '';
+
+            if (videosCatalog.length === 0) {
+                list.innerHTML = `<div class="text-slate-500 py-4 text-center">ಯಾವುದೇ ವೀಡಿಯೊಗಳಿಲ್ಲ (No published videos found).</div>`;
+                return;
+            }
+
+            videosCatalog.forEach((vid) => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between gap-3";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            ${vid.lang.toUpperCase()}
+                        </span>
+                        <span class="font-bold text-white truncate max-w-xs">${vid.title}</span>
+                        <span class="text-[10px] text-slate-500"><i class="fa-regular fa-eye"></i> ${vid.views} | <i class="fa-regular fa-heart"></i> ${vid.likes}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="editVideo(${vid.id})" class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button onclick="deleteVideo(${vid.id})" class="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Delete Article
+        function deleteArticle(id) {
+            if (confirm("ಖಚಿತವಾಗಿಯೂ ಈ ಲೇಖನವನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ? (Are you sure you want to delete this article?)")) {
+                articlesCatalog = articlesCatalog.filter(a => a.id !== id);
+                renderFilteredArticles();
+                renderAdminArticlesList();
+                alert("🗑️ ಲೇಖನವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ! (Article deleted successfully)");
+            }
+        }
+
+        // Edit Article
+        function editArticle(id) {
+            const art = articlesCatalog.find(a => a.id === id);
+            if (!art) return;
+
+            editingArticleId = id;
+            switchTab('admin');
+
+            document.getElementById('new-art-title').value = art.title;
+            document.getElementById('new-art-lang').value = art.lang;
+
+            const container = document.getElementById('dynamicBlocksContainer');
+            if (container) {
+                container.innerHTML = '';
+                if (art.blocks && art.blocks.length > 0) {
+                    art.blocks.forEach(b => {
+                        addBlock(b.type, b.content);
+                    });
+                }
+            }
+
+            alert("✏️ ಲೇಖನವನ್ನು ತಿದ್ದುಪಡಿ ಮಾಡಲು ಫಾರ್ಮ್‌ನಲ್ಲಿ ಲೋಡ್ ಮಾಡಲಾಗಿದೆ! (Loaded article for editing)");
+        }
+
+        // Add / Update / Delete Video Functions
+        function publishOrUpdateVideo() {
+            const title = document.getElementById('new-vid-title').value.trim();
+            const lang = document.getElementById('new-vid-lang').value;
+            const videoUrl = document.getElementById('new-vid-url').value.trim();
+            const desc = document.getElementById('new-vid-desc').value.trim();
+
+            if (!title || !videoUrl) {
+                alert("ದಯವಿಟ್ಟು ವೀಡಿಯೊ ಶೀರ್ಷಿಕೆ ಮತ್ತು ಲಿಂಕ್ ನಮೂದಿಸಿ (Please enter Video Title & Video Link).");
+                return;
+            }
+
+            if (editingVideoId) {
+                const vid = videosCatalog.find(v => v.id === editingVideoId);
+                if (vid) {
+                    vid.title = title;
+                    vid.lang = lang;
+                    vid.videoUrl = videoUrl;
+                    vid.desc = desc;
+                }
+                editingVideoId = null;
+                alert("💾 ವೀಡಿಯೊ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ! (Video changes saved successfully)");
+            } else {
+                const newVid = {
+                    id: Date.now(),
+                    title: title,
+                    lang: lang,
+                    videoUrl: videoUrl,
+                    desc: desc,
+                    views: 1,
+                    likes: 0
+                };
+                videosCatalog.unshift(newVid);
+                alert("🚀 ಹೊಸ ವೀಡಿಯೊವನ್ನು ಪ್ರಕಟಿಸಲಾಗಿದೆ! (Video published successfully)");
+            }
+
+            clearVideoForm();
+            renderFilteredVideos();
+            renderAdminVideosList();
+        }
+
+        function editVideo(id) {
+            const vid = videosCatalog.find(v => v.id === id);
+            if (!vid) return;
+
+            editingVideoId = id;
+            switchTab('admin');
+
+            document.getElementById('new-vid-title').value = vid.title;
+            document.getElementById('new-vid-lang').value = vid.lang;
+            document.getElementById('new-vid-url').value = vid.videoUrl;
+            document.getElementById('new-vid-desc').value = vid.desc || '';
+
+            const formTitle = document.getElementById('video-form-title');
+            if (formTitle) formTitle.innerText = "✏️ ವೀಡಿಯೊ ತಿದ್ದುಪಡಿ ಮಾಡಿ / Edit Video";
+
+            alert("✏️ ವೀಡಿಯೊ ವಿವರಗಳನ್ನು ತಿದ್ದುಪಡಿ ಮಾಡಲು ಫಾರ್ಮ್‌ನಲ್ಲಿ ಲೋಡ್ ಮಾಡಲಾಗಿದೆ! (Video loaded for editing)");
+        }
+
+        function deleteVideo(id) {
+            if (confirm("ಖಚಿತವಾಗಿಯೂ ಈ ವೀಡಿಯೊವನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ? (Are you sure you want to delete this video?)")) {
+                videosCatalog = videosCatalog.filter(v => v.id !== id);
+                renderFilteredVideos();
+                renderAdminVideosList();
+                alert("🗑️ ವೀಡಿಯೊವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ! (Video deleted successfully)");
+            }
+        }
+
+        function clearVideoForm() {
+            editingVideoId = null;
+            document.getElementById('new-vid-title').value = '';
+            document.getElementById('new-vid-url').value = '';
+            document.getElementById('new-vid-desc').value = '';
+            const formTitle = document.getElementById('video-form-title');
+            if (formTitle) formTitle.innerText = "ಹೊಸ ವೀಡಿಯೊ ಸೇರಿಸಿ / Add New Video";
+        }
+
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            if (tabId === 'admin' && !isAdminLoggedIn) {
+                toggleAdminLoginModal();
+                return;
+            }
+
+            const tabs = ['home', 'mission', 'articles', 'videos', 'about', 'admin'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                const sec = document.getElementById(`tab-${t}`);
+                if (t === tabId) {
+                    btn?.classList.add('bg-emerald-600', 'text-white');
+                    btn?.classList.remove('text-slate-400');
+                    sec?.classList.remove('hidden');
+                } else {
+                    btn?.classList.remove('bg-emerald-600', 'text-white');
+                    btn?.classList.add('text-slate-400');
+                    sec?.classList.add('hidden');
+                }
+            });
+
+            if (tabId === 'articles') renderFilteredArticles();
+            if (tabId === 'videos') renderFilteredVideos();
+                        if (tabId === 'admin') {
+                renderAdminArticlesList();
+                renderAdminVideosList();
+                const newUInput = document.getElementById('newAdminUserIdInput');
+                if (newUInput) newUInput.value = getStoredAdminUserId();
+            }
+        }
+
+        // Admin Login Modal Controls
+                function toggleAdminLoginModal() {
+            const modal = document.getElementById('adminLoginModal');
+            if (modal) {
+                modal.classList.toggle('hidden');
+                if (!modal.classList.contains('hidden')) {
+                    const uInput = document.getElementById('adminUserIdInput');
+                    if (uInput && !uInput.value) {
+                        uInput.value = getStoredAdminUserId();
+                    }
+                }
+            }
+        }
+
+        function checkAdminPasscode() {
+            const userVal = (document.getElementById('adminUserIdInput')?.value || '').trim();
+            const passVal = (document.getElementById('adminPasscodeInput')?.value || '').trim();
+            const err = document.getElementById('adminPasscodeErr');
+
+            const storedUser = getStoredAdminUserId();
+            const storedPass = getStoredAdminPasscode();
+
+            if (userVal.toLowerCase() === storedUser.toLowerCase() && passVal === storedPass) {
+                isAdminLoggedIn = true;
+                if (err) err.classList.add('hidden');
+                toggleAdminLoginModal();
+                switchTab('admin');
+                renderFilteredArticles();
+                renderFilteredVideos();
+                alert("🔓 ಆಡಳಿತ ಮಂಡಳಿ ಸಕ್ರಿಯಗೊಂಡಿದೆ! (Admin Access Unlocked)");
+            } else {
+                if (err) err.classList.remove('hidden');
+            }
+        }
+
+        // Dynamic Block Editor Helpers
+        function addBlock(type = 'text', initialContent = '') {
+            const container = document.getElementById('dynamicBlocksContainer');
+            if (!container) return;
+
+            const blockId = 'block-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            const blockDiv = document.createElement('div');
+            blockDiv.id = blockId;
+            blockDiv.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2 text-xs relative";
+
+            let iconHTML = '';
+            let labelText = '';
+            let inputFieldHTML = '';
+
+            if (type === 'text') {
+                iconHTML = '<i class="fa-solid fa-align-left text-emerald-400"></i>';
+                labelText = 'Text Paragraph';
+                inputFieldHTML = `<textarea class="block-content w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white h-24 focus:outline-none focus:border-emerald-500" placeholder="Enter paragraph text...">${initialContent}</textarea>`;
+            } else if (type === 'image') {
+                iconHTML = '<i class="fa-solid fa-image text-emerald-400"></i>';
+                labelText = 'Local Image File';
+                inputFieldHTML = `
+                    <div class="space-y-2">
+                        <input type="file" accept="image/*" onchange="handleFileBlock(event, '${blockId}')" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300">
+                        <input type="hidden" class="block-content" value="${initialContent}">
+                        ${initialContent ? `<img src="${initialContent}" class="h-24 rounded-lg border border-slate-800 object-cover">` : ''}
+                    </div>`;
+            } else if (type === 'pdf') {
+                iconHTML = '<i class="fa-solid fa-file-pdf text-red-400"></i>';
+                labelText = 'Local PDF File';
+                inputFieldHTML = `
+                    <div class="space-y-2">
+                        <input type="file" accept="application/pdf" onchange="handleFileBlock(event, '${blockId}')" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300">
+                        <input type="hidden" class="block-content" value="${initialContent}">
+                        ${initialContent ? '<span class="text-emerald-400 font-bold">✓ PDF File Attached</span>' : ''}
+                    </div>`;
+            } else if (type === 'video') {
+                iconHTML = '<i class="fa-solid fa-video text-emerald-400"></i>';
+                labelText = 'Video Link (YouTube / Facebook / Instagram / MP4)';
+                inputFieldHTML = `<input type="text" class="block-content w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500" placeholder="https://www.youtube.com/watch?v=..." value="${initialContent}">`;
+            } else if (type === 'audio') {
+                iconHTML = '<i class="fa-solid fa-music text-emerald-400"></i>';
+                labelText = 'Audio / SoundCloud Link';
+                inputFieldHTML = `<input type="text" class="block-content w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500" placeholder="https://on.soundcloud.com/... or https://..." value="${initialContent}">`;
+            }
+
+            blockDiv.setAttribute('data-block-type', type);
+            blockDiv.innerHTML = `
+                <div class="flex items-center justify-between pb-1 border-b border-slate-900">
+                    <span class="font-bold text-slate-300 flex items-center gap-1.5">${iconHTML} ${labelText}</span>
+                    <button onclick="removeBlock('${blockId}')" class="text-red-400 hover:text-red-300 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Remove</button>
+                </div>
+                ${inputFieldHTML}
+            `;
+            container.appendChild(blockDiv);
+        }
+
+        function removeBlock(blockId) {
+            const block = document.getElementById(blockId);
+            if (block) block.remove();
+        }
+
+        function handleFileBlock(event, blockId) {
+            const file = event.target.files[0];
+            const block = document.getElementById(blockId);
+            if (file && block) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const hiddenInput = block.querySelector('.block-content');
+                    if (hiddenInput) hiddenInput.value = e.target.result;
+                    alert("✅ ಫೈಲ್ ಯಶಸ್ವಿಯಾಗಿ ಲಗತ್ತಿಸಲಾಗಿದೆ! (File attached successfully)");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Article Publishing & Updating
+        function publishArticle() {
+            const title = document.getElementById('new-art-title').value.trim();
+            const lang = document.getElementById('new-art-lang').value;
+            const container = document.getElementById('dynamicBlocksContainer');
+
+            if (!title) {
+                alert("ದಯವಿಟ್ಟು ಲೇಖನದ ಶೀರ್ಷಿಕೆಯನ್ನು ಭರ್ತಿ ಮಾಡಿ (Please enter Article Title).");
+                return;
+            }
+
+            const blocks = [];
+            if (container) {
+                const blockElements = container.children;
+                for (let el of blockElements) {
+                    const type = el.getAttribute('data-block-type');
+                    const input = el.querySelector('.block-content');
+                    if (type && input && input.value.trim()) {
+                        blocks.push({ type: type, content: input.value.trim() });
+                    }
+                }
+            }
+
+            if (editingArticleId) {
+                const art = articlesCatalog.find(a => a.id === editingArticleId);
+                if (art) {
+                    art.title = title;
+                    art.lang = lang;
+                    art.blocks = blocks;
+                }
+                editingArticleId = null;
+                alert("💾 ಲೇಖನದ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ! (Article updated successfully)");
+            } else {
+                const newArt = {
+                    id: Date.now(),
+                    title: title,
+                    lang: lang,
+                    blocks: blocks,
+                    likes: 0,
+                    views: 1
+                };
+                articlesCatalog.unshift(newArt);
+                alert("🚀 ಹೊಸ ಲೇಖನ ಯಶಸ್ವಿಯಾಗಿ ಪ್ರಕಟವಾಗಿದೆ! (Article published successfully)");
+            }
+
+            // Reset Form
+            document.getElementById('new-art-title').value = '';
+            if (container) container.innerHTML = '';
+            addBlock('text');
+
+            renderFilteredArticles();
+            renderAdminArticlesList();
+            switchTab('articles');
+        }
+
+        // Interactions (Likes & Shares)
+        function likePost(type, id) {
+            if (type === 'article') {
+                const art = articlesCatalog.find(a => a.id === id);
+                if (art) { art.likes += 1; renderFilteredArticles(); }
+            } else if (type === 'video') {
+                const vid = videosCatalog.find(v => v.id === id);
+                if (vid) { vid.likes += 1; renderFilteredVideos(); }
+            }
+        }
+
+        function sharePost(type, id) {
+            let title = '';
+            let snippet = '';
+            let lang = currentLang;
+
+            if (type === 'article') {
+                const art = articlesCatalog.find(a => a.id === id);
+                if (art) {
+                    title = art.title;
+                    lang = art.lang;
+                    if (art.blocks && art.blocks.length > 0) {
+                        const txtBlock = art.blocks.find(b => b.type === 'text');
+                        if (txtBlock && txtBlock.content) {
+                            snippet = txtBlock.content.substring(0, 120) + '...';
+                        }
+                    }
+                }
+            } else if (type === 'video') {
+                const vid = videosCatalog.find(v => v.id === id);
+                if (vid) {
+                    title = vid.title;
+                    lang = vid.lang;
+                    snippet = vid.desc || '';
+                }
+            }
+
+            if (!title) return;
+
+            const NL = String.fromCharCode(10);
+            const baseUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            const shareUrl = baseUrl + '?lang=' + lang + '#' + type + '-' + id;
+            const shareText = '📖 ' + title + (snippet ? NL + snippet : '') + NL + NL + '— ದಾರಿಹೋಕ - The Wayfarer' + NL + shareUrl;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: '📖 ' + title + (snippet ? NL + snippet : ''),
+                    url: shareUrl
+                }).catch(err => {
+                    copyShareUrl(shareUrl, title);
+                });
+            } else {
+                copyShareUrl(shareUrl, title);
+            }
+        }
+
+        function copyShareUrl(shareUrl, title) {
+            const NL = String.fromCharCode(10);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('🔗 \'' + title + '\' ಲೇಖನದ ನೇರ ಲಿಂಕ್ ಕಾಪಿ ಮಾಡಲಾಗಿದೆ!' + NL + NL + '(Direct link copied to clipboard):' + NL + shareUrl);
+                }).catch(() => {
+                    prompt('🔗 ಈ ಲೇಖನದ ನೇರ ಲಿಂಕ್ ಕಾಪಿ ಮಾಡಿ (Copy direct link):', shareUrl);
+                });
+            } else {
+                prompt('🔗 ಈ ಲೇಖನದ ನೇರ ಲಿಂಕ್ ಕಾಪಿ ಮಾಡಿ (Copy direct link):', shareUrl);
+            }
+        }
+
+        function checkSharedItem() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramLang = urlParams.get('lang');
+            if (paramLang && ['kn', 'en', 'ur', 'ar'].includes(paramLang)) {
+                const langSelect = document.getElementById('langSelector');
+                if (langSelect) langSelect.value = paramLang;
+                switchSiteLanguage(paramLang);
+            }
+
+            const hash = window.location.hash;
+            if (hash && (hash.startsWith('#article-') || hash.startsWith('#video-'))) {
+                const isArticle = hash.startsWith('#article-');
+                const targetTab = isArticle ? 'articles' : 'videos';
+                switchTab(targetTab);
+
+                setTimeout(() => {
+                    const targetEl = document.querySelector(hash);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetEl.classList.add('ring-2', 'ring-emerald-500', 'shadow-2xl', 'shadow-emerald-500/40');
+                        setTimeout(() => {
+                            targetEl.classList.remove('ring-2', 'ring-emerald-500', 'shadow-2xl', 'shadow-emerald-500/40');
+                        }, 4000);
+                    }
+                }, 350);
+            }
+        }
+
+        // Hero Banner Settings
+        function uploadHeroImageFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const hero = document.getElementById('heroBannerCard');
+                    if (hero) {
+                        hero.style.backgroundImage = `url(${e.target.result})`;
+                        hero.style.backgroundSize = 'cover';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveHeroBannerSettings() {
+            const title = document.getElementById('admin-hero-title-input').value;
+            const desc = document.getElementById('admin-hero-desc-input').value;
+            if (title) document.getElementById('hero-heading-txt').innerText = title;
+            if (desc) document.getElementById('hero-desc-txt').innerText = desc;
+            alert("💾 ಹೀರೋ ಬ್ಯಾನರ್ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ! (Hero banner updated)");
+        }
+
+        // Supabase Key Modal
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.toggle('hidden');
+        }
+
+        function saveSupabaseKeys() {
+            alert("🔌 Supabase ಸಕ್ರಿಯಗೊಂಡಿದೆ! (Supabase keys saved)");
+            toggleModal('supabaseModal');
+        }
+
+        // Page Initialization
+        window.onload = function() {
+            switchSiteLanguage('kn'); checkSharedItem();
+            addBlock('text');
+        };
+    
+        function updateAdminCredentials() {
+            const newEmail = (document.getElementById('newAdminUserIdInput')?.value || '').trim();
+            const p1 = (document.getElementById('newAdminPasscodeInput')?.value || '').trim();
+            const p2 = (document.getElementById('confirmAdminPasscodeInput')?.value || '').trim();
+
+            if (!newEmail) {
+                alert('ದಯವಿಟ್ಟು User ID / Email ನಮೂದಿಸಿ (Please enter User ID / Email).');
+                return;
+            }
+            if (!p1) {
+                alert('ದಯವಿಟ್ಟು ಹೊಸ ಪಾಸ್‌ಕೋಡ್ ನಮೂದಿಸಿ (Please enter a new password).');
+                return;
+            }
+            if (p1 !== p2) {
+                alert('ಪಾಸ್‌ಕೋಡ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ (Passwords do not match).');
+                return;
+            }
+
+            localStorage.setItem('wayfarer_admin_userid', newEmail);
+            localStorage.setItem('wayfarer_admin_passcode', p1);
+            alert('🎉 ಆಡಳಿತ ಐಡಿ ಹಾಗೂ ಪಾಸ್‌ಕೋಡ್ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಗಿದೆ! (Credentials updated successfully)');
+            document.getElementById('newAdminPasscodeInput').value = '';
+            document.getElementById('confirmAdminPasscodeInput').value = '';
+        }
+
+    
+window.addEventListener('hashchange', checkSharedItem);
+</script>
+
+        <!-- ADMIN LOGIN MODAL -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-lock text-emerald-400"></i>
+                    <span id="admin-login-modal-title">ಆಡಳಿತ ಲಾಗಿನ್ / Admin Login</span>
+                </h3>
+                <button onclick="toggleAdminLoginModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <p id="admin-login-modal-desc" class="text-slate-400">
+                    ಆಡಳಿತ ನಿರ್ವಹಣೆಗೆ ಮುಂದುವರಿಯಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಲಾಗಿನ್ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ (Please enter User ID & Password).
+                </p>
+                <div>
+                    <label class="block text-slate-400 mb-1">User ID / Email</label>
+                    <input id="adminUserIdInput" type="text" placeholder="zn.live.amma@gmail.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Password</label>
+                    <input id="adminPasscodeInput" type="password" placeholder="Enter Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div id="adminPasscodeErr" class="text-red-400 text-[11px] hidden">
+                    ❌ ಐಡಿ ಅಥವಾ ಪಾಸ್‌ಕೋಡ್ ತಪ್ಪಾಗಿದೆ (Incorrect User ID or Password).
+                </div>
+                <button onclick="checkAdminPasscode()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition shadow-md">
+                    🔓 ಲಾಗಿನ್ / Unlock Admin
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
