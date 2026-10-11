@@ -5,27 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ದಾರಿಹೋಕ - The Wayfarer</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com">
-        function updateAdminPasscode() {
-            const p1 = document.getElementById('newAdminPasscodeInput').value;
-            const p2 = document.getElementById('confirmAdminPasscodeInput').value;
-
-            if (!p1 || p1.trim() === '') {
-                alert('ದಯವಿಟ್ಟು ಹೊಸ ಪಾಸ್‌ಕೋಡ್ ನಮೂದಿಸಿ (Please enter a new passcode).');
-                return;
-            }
-            if (p1 !== p2) {
-                alert('ಪಾಸ್‌ಕೋಡ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ (Passcodes do not match).');
-                return;
-            }
-
-            localStorage.setItem('wayfarer_admin_passcode', p1.trim());
-            alert('🎉 ಆಡಳಿತ ಪಾಸ್‌ಕೋಡ್ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಗಿದೆ! (Passcode updated successfully)');
-            document.getElementById('newAdminPasscodeInput').value = '';
-            document.getElementById('confirmAdminPasscodeInput').value = '';
-        }
-
-    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts for Kannada, Arabic, Urdu -->
@@ -553,10 +534,11 @@
                     <input id="sb-url" type="text" placeholder="https://xyz.supabase.co" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Supabase Anon Key</label>
+                    <label class="block text-slate-400 mb-1">Supabase Anon / Publishable Key (never service_role)</label>
                     <input id="sb-key" type="password" placeholder="eyJhbGciOi..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
                 </div>
             </div>
+            <p class="text-[11px] text-amber-300">These fields save only in this browser. To connect all devices, set the two SUPABASE constants in the HTML code.</p>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleModal('supabaseModal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Cancel</button>
                 <button onclick="saveSupabaseKeys()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Connect</button>
@@ -566,14 +548,122 @@
 
     <!-- JAVASCRIPT APP LOGIC (CLEAN ESCAPING & ZERO SYNTAX ERRORS) -->
     <script>
+        // IMPORTANT: Add your Supabase Project URL and anon/publishable key here.
+        // Never put a service_role/secret key in this public HTML file.
+        const SUPABASE_URL = 'https://syoywxtrnqccxqtsxxae.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5b3l3eHRybnFjY3hxdHN4eGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzNzU2ODAsImV4cCI6MjEwNjk1MTY4MH0.Fkwrztrz4gA9xinxhR7uWWRnqfxvgsxslP5rovlFICA';
+        const DATA_TABLE = 'wayfarer_site_data';
+        const MEDIA_BUCKET = 'wayfarer-media';
+        let supabaseClient = null;
+        let supabaseSession = null;
+        let databaseReady = false;
+
+        function initSupabase() {
+            const url = (SUPABASE_URL.startsWith('https://') ? SUPABASE_URL : localStorage.getItem('wayfarer_supabase_url')) || '';
+            const key = (!SUPABASE_ANON_KEY.startsWith('PASTE_') ? SUPABASE_ANON_KEY : localStorage.getItem('wayfarer_supabase_key')) || '';
+            if (!url || !key || url.includes('PASTE_YOUR')) return null;
+            if (!window.supabase?.createClient) {
+                console.error('Supabase JS library did not load.');
+                return null;
+            }
+            try {
+                supabaseClient = window.supabase.createClient(url, key);
+                return supabaseClient;
+            } catch (e) {
+                console.error('Supabase initialization failed:', e);
+                return null;
+            }
+        }
+
+        async function saveSiteData(showMessage = false) {
+            if (!supabaseClient) {
+                if (showMessage) alert('Supabase is not configured. Add your Project URL and anon/publishable key in the code first.');
+                return false;
+            }
+            if (!supabaseSession?.user) {
+                if (showMessage) alert('Please log in using your Supabase admin account before saving changes.');
+                return false;
+            }
+            const payload = {
+                id: 'main',
+                data: {
+                    articles: articlesCatalog,
+                    videos: videosCatalog,
+                    heroTitle: document.getElementById('hero-heading-txt')?.innerText || '',
+                    heroDesc: document.getElementById('hero-desc-txt')?.innerText || '',
+                    heroImage: document.getElementById('heroBannerCard')?.dataset?.uploadedImage || ''
+                },
+                updated_at: new Date().toISOString(),
+                updated_by: supabaseSession.user.id
+            };
+            const { error } = await supabaseClient.from(DATA_TABLE).upsert(payload, { onConflict: 'id' });
+            if (error) {
+                console.error('Supabase save error:', error);
+                if (showMessage) alert('Save failed: ' + error.message + '\n\nCheck the SQL table and Supabase RLS policies.');
+                return false;
+            }
+            if (showMessage) alert('Saved permanently to Supabase. Other devices will see the same content after refresh.');
+            return true;
+        }
+
+        async function loadSiteData() {
+            const client = initSupabase();
+            if (!client) {
+                console.warn('Supabase is not configured yet; displaying built-in sample content.');
+                return;
+            }
+            try {
+                const { data: sessionData } = await client.auth.getSession();
+                supabaseSession = sessionData?.session || null;
+                isAdminLoggedIn = !!supabaseSession?.user;
+                const { data, error } = await client.from(DATA_TABLE).select('data').eq('id', 'main').maybeSingle();
+                if (error) {
+                    console.error('Supabase load error:', error);
+                    alert('Supabase connection/table error: ' + error.message + '\n\nRun the SQL setup supplied with the corrected file.');
+                    return;
+                }
+                if (data?.data) {
+                    const saved = data.data;
+                    if (Array.isArray(saved.articles)) articlesCatalog = saved.articles;
+                    if (Array.isArray(saved.videos)) videosCatalog = saved.videos;
+                    if (saved.heroTitle) document.getElementById('hero-heading-txt').innerText = saved.heroTitle;
+                    if (saved.heroDesc) document.getElementById('hero-desc-txt').innerText = saved.heroDesc;
+                    if (saved.heroImage) {
+                        const hero = document.getElementById('heroBannerCard');
+                        hero.style.backgroundImage = `url("${saved.heroImage}")`;
+                        hero.style.backgroundSize = 'cover';
+                        hero.dataset.uploadedImage = saved.heroImage;
+                    }
+                }
+                databaseReady = true;
+            } catch (e) {
+                console.error('Supabase load failed:', e);
+                alert('Could not load content from Supabase: ' + (e.message || e));
+            }
+        }
+
+        async function uploadMediaToSupabase(file, folder = 'articles') {
+            if (!supabaseClient || !supabaseSession?.user) {
+                throw new Error('Please connect Supabase and log in as admin before uploading files.');
+            }
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+            const path = `${folder}/${Date.now()}-${safeName}`;
+            const { error } = await supabaseClient.storage.from(MEDIA_BUCKET).upload(path, file, {
+                cacheControl: '3600', upsert: false, contentType: file.type || 'application/octet-stream'
+            });
+            if (error) throw error;
+            const { data } = supabaseClient.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+            return data.publicUrl;
+        }
+
         const defaultAdminUserId = 'zn.live.amma@gmail.com';
-        const defaultAdminPasscode = 'Amma@2026';
+        // Admin credentials are verified by Supabase Auth, not stored in this HTML.
 
         function getStoredAdminUserId() {
             return localStorage.getItem('wayfarer_admin_userid') || defaultAdminUserId;
         }
         function getStoredAdminPasscode() {
-            return localStorage.getItem('wayfarer_admin_passcode') || defaultAdminPasscode;
+            return '';
         }
     
         // Language Translation Dictionary
@@ -762,7 +852,7 @@
         
         
         function getStoredPasscode() {
-            return localStorage.getItem('wayfarer_admin_passcode') || defaultPasscode;
+            return '';
         }
 
         let editingArticleId = null;
@@ -1069,8 +1159,8 @@
                         } else if (b.type === 'pdf') {
                             blocksHTML += `
                                 <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-                                    <span class="text-xs text-slate-300"><i class="fa-solid fa-file-pdf text-red-400"></i> Attached Document</span>
-                                    <a href="${b.content}" download="article-document.pdf" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold">Download PDF</a>
+                                    <span class="text-xs text-slate-300">PDF document</span>
+                                    <a href="${b.content}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-bold inline-flex items-center gap-1.5"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open PDF</a>
                                 </div>`;
                         } else if (b.type === 'video') {
                             blocksHTML += getVideoEmbedHTML(b.content);
@@ -1267,9 +1357,15 @@
         }
 
         // Delete Article
-        function deleteArticle(id) {
+        async function deleteArticle(id) {
             if (confirm("ಖಚಿತವಾಗಿಯೂ ಈ ಲೇಖನವನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ? (Are you sure you want to delete this article?)")) {
+                const previous = articlesCatalog;
                 articlesCatalog = articlesCatalog.filter(a => a.id !== id);
+                if (!await saveSiteData(false)) {
+                    articlesCatalog = previous;
+                    alert('Delete failed: the database did not save the change.');
+                    return;
+                }
                 renderFilteredArticles();
                 renderAdminArticlesList();
                 alert("🗑️ ಲೇಖನವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ! (Article deleted successfully)");
@@ -1301,7 +1397,7 @@
         }
 
         // Add / Update / Delete Video Functions
-        function publishOrUpdateVideo() {
+        async function publishOrUpdateVideo() {
             const title = document.getElementById('new-vid-title').value.trim();
             const lang = document.getElementById('new-vid-lang').value;
             const videoUrl = document.getElementById('new-vid-url').value.trim();
@@ -1336,6 +1432,11 @@
                 alert("🚀 ಹೊಸ ವೀಡಿಯೊವನ್ನು ಪ್ರಕಟಿಸಲಾಗಿದೆ! (Video published successfully)");
             }
 
+            const saved = await saveSiteData(false);
+            if (!saved) {
+                alert('Video changes were NOT saved to Supabase. Check connection/login.');
+                return;
+            }
             clearVideoForm();
             renderFilteredVideos();
             renderAdminVideosList();
@@ -1359,9 +1460,15 @@
             alert("✏️ ವೀಡಿಯೊ ವಿವರಗಳನ್ನು ತಿದ್ದುಪಡಿ ಮಾಡಲು ಫಾರ್ಮ್‌ನಲ್ಲಿ ಲೋಡ್ ಮಾಡಲಾಗಿದೆ! (Video loaded for editing)");
         }
 
-        function deleteVideo(id) {
+        async function deleteVideo(id) {
             if (confirm("ಖಚಿತವಾಗಿಯೂ ಈ ವೀಡಿಯೊವನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ? (Are you sure you want to delete this video?)")) {
+                const previous = videosCatalog;
                 videosCatalog = videosCatalog.filter(v => v.id !== id);
+                if (!await saveSiteData(false)) {
+                    videosCatalog = previous;
+                    alert('Delete failed: the database did not save the change.');
+                    return;
+                }
                 renderFilteredVideos();
                 renderAdminVideosList();
                 alert("🗑️ ವೀಡಿಯೊವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ! (Video deleted successfully)");
@@ -1417,30 +1524,41 @@
                 if (!modal.classList.contains('hidden')) {
                     const uInput = document.getElementById('adminUserIdInput');
                     if (uInput && !uInput.value) {
-                        uInput.value = getStoredAdminUserId();
+                        uInput.value = supabaseSession?.user?.email || getStoredAdminUserId();
                     }
                 }
             }
         }
 
-        function checkAdminPasscode() {
+        async function checkAdminPasscode() {
             const userVal = (document.getElementById('adminUserIdInput')?.value || '').trim();
             const passVal = (document.getElementById('adminPasscodeInput')?.value || '').trim();
             const err = document.getElementById('adminPasscodeErr');
-
-            const storedUser = getStoredAdminUserId();
-            const storedPass = getStoredAdminPasscode();
-
-            if (userVal.toLowerCase() === storedUser.toLowerCase() && passVal === storedPass) {
+            if (!supabaseClient) initSupabase();
+            if (!supabaseClient) {
+                if (err) { err.textContent = 'Supabase is not configured. Add the URL and anon key first.'; err.classList.remove('hidden'); }
+                else alert('Supabase is not configured.');
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email: userVal, password: passVal });
+                if (error) throw error;
+                supabaseSession = data.session;
                 isAdminLoggedIn = true;
                 if (err) err.classList.add('hidden');
+                document.getElementById('adminPasscodeInput').value = '';
                 toggleAdminLoginModal();
+                await loadSiteData();
                 switchTab('admin');
-                renderFilteredArticles();
-                renderFilteredVideos();
-                alert("🔓 ಆಡಳಿತ ಮಂಡಳಿ ಸಕ್ರಿಯಗೊಂಡಿದೆ! (Admin Access Unlocked)");
-            } else {
-                if (err) err.classList.remove('hidden');
+                renderFilteredArticles(); renderFilteredVideos();
+                renderAdminArticlesList(); renderAdminVideosList();
+                alert('Admin login successful.');
+            } catch (e) {
+                console.error('Admin login failed:', e);
+                if (err) {
+                    err.textContent = 'Login failed: ' + (e.message || 'Check your Supabase Auth email/password.');
+                    err.classList.remove('hidden');
+                } else alert('Login failed: ' + (e.message || e));
             }
         }
 
@@ -1506,22 +1624,43 @@
             if (block) block.remove();
         }
 
-        function handleFileBlock(event, blockId) {
-            const file = event.target.files[0];
+        async function handleFileBlock(event, blockId) {
+            const file = event.target.files?.[0];
             const block = document.getElementById(blockId);
-            if (file && block) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const hiddenInput = block.querySelector('.block-content');
-                    if (hiddenInput) hiddenInput.value = e.target.result;
-                    alert("✅ ಫೈಲ್ ಯಶಸ್ವಿಯಾಗಿ ಲಗತ್ತಿಸಲಾಗಿದೆ! (File attached successfully)");
-                };
-                reader.readAsDataURL(file);
+            if (!file || !block) return;
+            const type = block.getAttribute('data-block-type');
+            const maxBytes = type === 'pdf' ? 15 * 1024 * 1024 : 8 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                alert(type === 'pdf' ? 'PDF must be 15 MB or smaller.' : 'Image must be 8 MB or smaller.');
+                event.target.value = '';
+                return;
+            }
+            try {
+                const url = await uploadMediaToSupabase(file, type === 'pdf' ? 'pdfs' : 'images');
+                const hiddenInput = block.querySelector('.block-content');
+                if (hiddenInput) hiddenInput.value = url;
+                const oldPreview = block.querySelector('.upload-preview');
+                if (oldPreview) oldPreview.remove();
+                if (type === 'image') {
+                    const preview = document.createElement('img');
+                    preview.src = url;
+                    preview.className = 'upload-preview h-24 rounded-lg border border-slate-800 object-cover';
+                    block.appendChild(preview);
+                } else {
+                    const preview = document.createElement('span');
+                    preview.className = 'upload-preview text-emerald-400 font-bold';
+                    preview.textContent = '✓ PDF uploaded';
+                    block.appendChild(preview);
+                }
+                alert('File uploaded to Supabase Storage successfully.');
+            } catch (e) {
+                console.error('Media upload failed:', e);
+                alert('File upload failed: ' + (e.message || e) + '\nRun the Storage setup SQL and make sure you are logged in as admin.');
             }
         }
 
         // Article Publishing & Updating
-        function publishArticle() {
+        async function publishArticle() {
             const title = document.getElementById('new-art-title').value.trim();
             const lang = document.getElementById('new-art-lang').value;
             const container = document.getElementById('dynamicBlocksContainer');
@@ -1565,6 +1704,11 @@
                 alert("🚀 ಹೊಸ ಲೇಖನ ಯಶಸ್ವಿಯಾಗಿ ಪ್ರಕಟವಾಗಿದೆ! (Article published successfully)");
             }
 
+            const saved = await saveSiteData(false);
+            if (!saved) {
+                alert('The article is currently only in this page memory and was NOT saved to the database. Check Supabase connection/login.');
+                return;
+            }
             // Reset Form
             document.getElementById('new-art-title').value = '';
             if (container) container.innerHTML = '';
@@ -1576,13 +1720,13 @@
         }
 
         // Interactions (Likes & Shares)
-        function likePost(type, id) {
+        async function likePost(type, id) {
             if (type === 'article') {
                 const art = articlesCatalog.find(a => a.id === id);
-                if (art) { art.likes += 1; renderFilteredArticles(); }
+                if (art) { art.likes += 1; renderFilteredArticles(); if (isAdminLoggedIn) await saveSiteData(false); }
             } else if (type === 'video') {
                 const vid = videosCatalog.find(v => v.id === id);
-                if (vid) { vid.likes += 1; renderFilteredVideos(); }
+                if (vid) { vid.likes += 1; renderFilteredVideos(); if (isAdminLoggedIn) await saveSiteData(false); }
             }
         }
 
@@ -1674,27 +1818,36 @@
         }
 
         // Hero Banner Settings
-        function uploadHeroImageFile(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const hero = document.getElementById('heroBannerCard');
-                    if (hero) {
-                        hero.style.backgroundImage = `url(${e.target.result})`;
-                        hero.style.backgroundSize = 'cover';
-                    }
-                };
-                reader.readAsDataURL(file);
+        async function uploadHeroImageFile(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            if (file.size > 8 * 1024 * 1024) {
+                alert('Hero image must be 8 MB or smaller.');
+                event.target.value = '';
+                return;
+            }
+            try {
+                const url = await uploadMediaToSupabase(file, 'hero');
+                const hero = document.getElementById('heroBannerCard');
+                if (hero) {
+                    hero.style.backgroundImage = `url("${url}")`;
+                    hero.style.backgroundSize = 'cover';
+                    hero.dataset.uploadedImage = url;
+                }
+                alert('Hero image uploaded. Click “Save Banner Changes” to publish it.');
+            } catch (e) {
+                console.error(e);
+                alert('Hero image upload failed: ' + (e.message || e));
             }
         }
 
-        function saveHeroBannerSettings() {
+        async function saveHeroBannerSettings() {
             const title = document.getElementById('admin-hero-title-input').value;
             const desc = document.getElementById('admin-hero-desc-input').value;
             if (title) document.getElementById('hero-heading-txt').innerText = title;
             if (desc) document.getElementById('hero-desc-txt').innerText = desc;
-            alert("💾 ಹೀರೋ ಬ್ಯಾನರ್ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ! (Hero banner updated)");
+            if (await saveSiteData(false)) alert("💾 Hero banner saved permanently to Supabase.");
+            else alert("Hero banner was NOT saved. Check Supabase connection and admin login.");
         }
 
         // Supabase Key Modal
@@ -1704,39 +1857,67 @@
         }
 
         function saveSupabaseKeys() {
-            alert("🔌 Supabase ಸಕ್ರಿಯಗೊಂಡಿದೆ! (Supabase keys saved)");
+            const url = (document.getElementById('sb-url')?.value || '').trim();
+            const key = (document.getElementById('sb-key')?.value || '').trim();
+            if (!url.startsWith('https://') || !key) {
+                alert('Enter a valid Supabase Project URL and anon/publishable key.');
+                return;
+            }
+            localStorage.setItem('wayfarer_supabase_url', url);
+            localStorage.setItem('wayfarer_supabase_key', key);
+            if (!initSupabase()) {
+                alert('Could not initialize Supabase. Check the URL/key and try again.');
+                return;
+            }
             toggleModal('supabaseModal');
+            alert('Supabase connected on this browser. For every visitor/device, also paste these values into SUPABASE_URL and SUPABASE_ANON_KEY near the top of the code.');
+            loadSiteData().then(() => {
+                renderFilteredArticles(); renderFilteredVideos();
+                renderAdminArticlesList(); renderAdminVideosList();
+            });
         }
 
         // Page Initialization
-        window.onload = function() {
-            switchSiteLanguage('kn'); checkSharedItem();
+        window.addEventListener('load', async function() {
+            switchSiteLanguage('kn');
             addBlock('text');
-        };
+            await loadSiteData();
+            renderFilteredArticles();
+            renderFilteredVideos();
+            renderAdminArticlesList();
+            renderAdminVideosList();
+            checkSharedItem();
+            const savedUrl = localStorage.getItem('wayfarer_supabase_url') || '';
+            const savedKey = localStorage.getItem('wayfarer_supabase_key') || '';
+            if (document.getElementById('sb-url')) document.getElementById('sb-url').value = savedUrl;
+            if (document.getElementById('sb-key')) document.getElementById('sb-key').value = savedKey;
+        });
     
-        function updateAdminCredentials() {
+        async function updateAdminCredentials() {
             const newEmail = (document.getElementById('newAdminUserIdInput')?.value || '').trim();
             const p1 = (document.getElementById('newAdminPasscodeInput')?.value || '').trim();
             const p2 = (document.getElementById('confirmAdminPasscodeInput')?.value || '').trim();
-
-            if (!newEmail) {
-                alert('ದಯವಿಟ್ಟು User ID / Email ನಮೂದಿಸಿ (Please enter User ID / Email).');
+            if (!supabaseClient || !supabaseSession?.user) {
+                alert('Please log in with your Supabase admin account first.');
                 return;
             }
-            if (!p1) {
-                alert('ದಯವಿಟ್ಟು ಹೊಸ ಪಾಸ್‌ಕೋಡ್ ನಮೂದಿಸಿ (Please enter a new password).');
+            if (!newEmail || !p1) {
+                alert('Enter the new admin email and password.');
                 return;
             }
             if (p1 !== p2) {
-                alert('ಪಾಸ್‌ಕೋಡ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ (Passwords do not match).');
+                alert('Passwords do not match.');
                 return;
             }
-
-            localStorage.setItem('wayfarer_admin_userid', newEmail);
-            localStorage.setItem('wayfarer_admin_passcode', p1);
-            alert('🎉 ಆಡಳಿತ ಐಡಿ ಹಾಗೂ ಪಾಸ್‌ಕೋಡ್ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಗಿದೆ! (Credentials updated successfully)');
-            document.getElementById('newAdminPasscodeInput').value = '';
-            document.getElementById('confirmAdminPasscodeInput').value = '';
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ email: newEmail, password: p1 });
+                if (error) throw error;
+                alert('Update request sent to Supabase. If email confirmation is enabled, confirm the new email before using it.');
+                document.getElementById('newAdminPasscodeInput').value = '';
+                document.getElementById('confirmAdminPasscodeInput').value = '';
+            } catch (e) {
+                alert('Credential update failed: ' + (e.message || e));
+            }
         }
 
     
